@@ -1,26 +1,44 @@
 /*
-  Hero — pinned, three-beat scroll sequence. All values are tokens
+  Hero — pinned, monotonic scroll sequence. All values are tokens
   from tokens.css; the only non-token numbers here are the layout
   geometry needed to reconstruct the layered artwork's own coordinate
-  space (verified against the source art, see js/hero.js header) and
+  space (verified against the source art — see js/hero.js header) and
   the cover's trim ratio, which is itself a token (--cover-ratio-*).
 
-  Structure (back to front):
+  Structure (back to front — matches assets/cover/layer_positions.json's
+  z_order_back_to_front, split across two independently-scaled groups
+  so shrinking one can never reintroduce bars in the other):
     .hero                    tall scroll track (sets pin distance)
       .hero-pin              the pinned 100vh viewport window
-        .hero-cover-frame    sized + centered at the Nature cover's
-                              true aspect ratio; hosts the zooming
-                              stage and the final flat cover image
-          .hero-stage          the layered artwork, square, zoomed
-                                in to fill the viewport at rest
-            .hero-layer--bg
-            .hero-layer--jetpulse   (clipped duplicate of bg, pulses)
-            .haze-1 / .haze-2       (behind the disk)
-            .hero-layer--disk
-            .haze-3 … .haze-6       (in front of the disk)
-            .hero-layer--art        (cover_art.jpeg, crossfades in)
-          .hero-layer--cover   (cover_nature.png, crossfades in last)
-        .hero-frame-bar × 4    margins that close in over the scene
+        .hero-stage            bg + corner haze — sized to always
+                                COVER the viewport (100vmax), so there
+                                is never a pillarbox/letterbox gap.
+                                bg itself carries its own +35% scale
+                                so its edges never enter frame while
+                                it parallaxes.
+          .hero-layer--bg
+          .haze-1 … .haze-4     (the four canvas corners — the "dust",
+                                  strong/fast parallax)
+        .hero-engine           disk + magnetar + all jet pieces + the
+                                cover's text overlay — ONE rigid group,
+                                sized and scaled independently of the
+                                stage (matches cover_art.jpeg's
+                                contained composition; see hero.js for
+                                why the scale is JS-measured once).
+                                Everything inside shares ONE parallax
+                                transform (set on .hero-engine itself
+                                in hero.js) — weak/slow, the still
+                                center the dust rushes past.
+          .jetglow-1 / .jetglow-2 (top / bottom jet-base flares)
+          .hero-layer--jet-lower  (behind the disk)
+          .hero-layer--disk
+          .hero-layer--magnetar   (in front of the disk, at center)
+          .hero-layer--jet-upper  (crosses in front of everything)
+          .hero-layer--overlay    (Nature masthead + cover text — the
+                                    Beat-3 reveal; registered to this
+                                    same square canvas, see below)
+        .hero-frame-bar × 4    margins that close in to the cover's
+                                trim size, concurrent with the overlay
         .hero-copy             eyebrow / title / dek
         .hero-scrollcue
         .hero-caption
@@ -31,11 +49,9 @@
   height: 300vh;
   background: var(--bg);
 
-  /* The Nature cover's frame, fit to the viewport at its true aspect
-     ratio. Computed once here (inherited by both .hero-pin and the
-     reduced-motion .hero-static-resolve block) so nothing risks
-     drifting out of sync with the closing bars, which need the
-     leftover margin rather than the frame size itself. */
+  /* The Nature cover's own trim ratio — used to size the closing
+     frame bars, and (via --cover-ratio-w/h below) to place the text
+     overlay at the exact crop it represents. */
   --frame-w: min(92vw, calc(72vh * var(--cover-ratio-w) / var(--cover-ratio-h)));
   --frame-h: min(72vh, calc(92vw * var(--cover-ratio-h) / var(--cover-ratio-w)));
 }
@@ -55,32 +71,20 @@
 }
 
 /* ---------------------------------------------------------------
-   Convergence frame — sized at the real Nature trim ratio. Not
-   clipping (no overflow:hidden): during Beat 1/2 the stage inside
-   it is scaled up past its bounds on purpose, and the closing bars
-   (siblings, not children) are what actually hide the excess.
+   Stage — bg + haze only. 100vmax is exactly max(100vw, 100vh), the
+   classic "cover a viewport with a square" trick: at ANY aspect
+   ratio this square is large enough to fill the screen with no
+   pillarboxing, with no JS measurement needed. Scroll parallax
+   (hero.js) only ever translates it a little from here — it never
+   resizes, so it can never expose a bar.
 ------------------------------------------------------------------ */
-.hero-cover-frame {
+.hero-stage {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: var(--frame-w);
-  height: var(--frame-h);
-  transform: translate(-50%, -50%);
-}
-
-.hero-stage {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  height: 100%;
-  aspect-ratio: 1 / 1;
+  width: 100vmax;
+  height: 100vmax;
   will-change: transform;
-  /* xPercent centering + the Beat-1/Beat-3 zoom scale are both set by
-     hero.js (gsap owns this element's transform entirely — see the
-     computeZoom() comment there for why this can't be pure CSS). The
-     hero-pin stays opacity:0 until hero.js finishes its first render,
-     so there's nothing to flash before that transform is applied. */
 }
 
 .hero-layer {
@@ -90,41 +94,19 @@
   will-change: transform, opacity;
 }
 
-.hero-layer--bg,
-.hero-layer--jetpulse,
-.hero-layer--art {
+.hero-layer--bg {
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-.hero-layer--jetpulse {
-  /* A duplicate of bg_environment, masked down to a soft column
-     around the jet and screen-blended over the (always fully-opaque)
-     base copy beneath it. Pulsing this duplicate's opacity therefore
-     reads as the jet itself brightening/dimming, rather than being
-     invisibly stacked on top of an identical, unmoving copy of the
-     same pixels. A feathered mask (not clip-path) keeps the effect
-     from reading as a hard-edged rectangle over the hazy sky. */
-  -webkit-mask-image: radial-gradient(ellipse 16% 55% at 50% 50%, #000 0%, #000 35%, transparent 100%);
-  mask-image: radial-gradient(ellipse 16% 55% at 50% 50%, #000 0%, #000 35%, transparent 100%);
-  mix-blend-mode: screen;
-}
-
-.hero-layer--disk {
-  /* verified by cross-correlation against cover_art.jpeg: the disk
-     sits at 12.5%/34.375% of the 2880×2880 art canvas at 68.75%/37.5%
-     of its size (offset 360,990px, size 1980×1080px) */
-  left: 12.5%;
-  top: 34.375%;
-  width: 68.75%;
-  height: 37.5%;
-  object-fit: contain;
+  /* Headroom so bg's own edge can never enter frame while the stage
+     parallaxes — this is what caused the horizontal-seam glitch when
+     it was too tight in an earlier pass. */
+  transform: scale(1.35);
 }
 
 .hero-layer--haze {
-  width: 34%;
+  width: 36%;
   height: auto;
   opacity: 0.5;
   /* Several of the wisp PNGs are cropped by their own canvas edge
@@ -135,27 +117,114 @@
   mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, #000 50%, transparent 100%);
 }
 
-/* Hand-placed for atmospheric depth — not registered to the art. */
-.haze-1 { left: -6%;  top: 6%;   width: 30%; opacity: 0.4; transform: rotate(-6deg); }
-.haze-2 { right: -8%; top: 10%;  width: 32%; opacity: 0.38; transform: rotate(8deg) scaleX(-1); }
-.haze-3 { left: -4%;  bottom: 4%; width: 34%; opacity: 0.45; transform: rotate(4deg); }
-.haze-4 { right: -6%; bottom: -2%; width: 30%; opacity: 0.4; transform: rotate(-10deg) scaleX(-1); }
-.haze-5 { left: 50%;  top: -6%;  width: 46%; opacity: 0.55; transform: translateX(-50%); }
-.haze-6 { left: 50%;  bottom: -8%; width: 46%; opacity: 0.55; transform: translateX(-50%) rotate(180deg); }
+/* Hand-placed in the four canvas corners per layer_positions.json's
+   haze_corners note (~36% × ~50% each) — not registered to the art.
+   These are the "dust": strong, fast, individually-directed parallax
+   (hero.js) is what sells the scene's motion. */
+.haze-1 { left: -2%;  top: -2%;    width: 36%; opacity: 0.4;  transform: rotate(-6deg); }
+.haze-2 { right: -2%; top: -2%;    width: 36%; opacity: 0.38; transform: rotate(8deg) scaleX(-1); }
+.haze-3 { left: -2%;  bottom: -2%; width: 36%; opacity: 0.45; transform: rotate(4deg) scaleY(-1); }
+.haze-4 { right: -2%; bottom: -2%; width: 36%; opacity: 0.4;  transform: rotate(-10deg) scale(-1); }
 
-.hero-layer--art,
-.hero-layer--cover {
-  opacity: 0;
+/* ---------------------------------------------------------------
+   Engine — disk + magnetar + jets + the cover text overlay, one
+   rigid group. Its own square, sized independently of .hero-stage —
+   shrinking this can never shrink or letterbox the stage. The base
+   CSS size here is deliberately the FRAME-MATCHING size (frame-w
+   divided by the cover's own aspect ratio) rather than a viewport-
+   relative guess: that makes "scale: 1" the exact size at which the
+   text overlay's crop (see .hero-layer--overlay) fills --frame-w
+   precisely, with no measurement needed for Beat 3's registration.
+   Beat 1's "small, contained, ~35% of viewport width" look is then
+   a single JS-measured scale-up applied on top of this — see
+   computeEngineStartScale() in hero.js — which the scroll timeline
+   eases back down to 1 across the whole scroll (monotonic).
+------------------------------------------------------------------ */
+.hero-engine {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(var(--frame-w) * var(--cover-ratio-h) / var(--cover-ratio-w));
+  height: calc(var(--frame-w) * var(--cover-ratio-h) / var(--cover-ratio-w));
+  will-change: transform;
 }
 
-.hero-layer--cover {
-  /* sits in the frame, not the stage: it never zooms, it's simply
-     revealed once the stage has zoomed down to match its box */
-  position: absolute;
-  inset: 0;
-  width: 100%;
+.hero-layer--jetglow {
+  /* top/bottom jet-base flares — layer_positions.json verbatim for
+     position/size. These are ambient glow, not the beam itself:
+     stacked at full opacity under jet_upper/jet_lower they summed to
+     flat white. Dimmed to read as faint atmosphere instead. */
+  left: 25%;
+  width: 50%;
+  height: 15.62%;
+  object-fit: contain;
+  opacity: 0.35;
+}
+.jetglow-1 { top: 0; }
+.jetglow-2 { top: 84.38%; }
+
+.hero-layer--jet-lower,
+.hero-layer--jet-upper {
+  /* both centered on the same vertical axis (left 48.44% + width
+     3.12% = 50%) */
+  left: 48.44%;
+  width: 3.12%;
+  object-fit: contain;
+}
+.hero-layer--jet-lower { top: 60.94%; height: 39.06%; }
+.hero-layer--jet-upper { top: 0;      height: 53.12%; }
+
+.hero-layer--disk {
+  /* verified by cross-correlation against cover_art.jpeg, then
+     confirmed against layer_positions.json: 12.5%/34.38% of the
+     square canvas at 68.75%/37.5% of its size */
+  left: 12.5%;
+  top: 34.38%;
+  width: 68.75%;
+  height: 37.5%;
+  object-fit: contain;
+  /* disk_foreground.png's alpha isn't quite zero right at its top
+     edge (a faint ~1-2/255 residual, presumably a canvas-crop
+     artifact) — invisible against the bright disk/jet, but reads as
+     a hard seam against open dark sky. A hairline top feather (2.5%
+     of the box) hides that without touching the disk itself. */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 2.5%, #000 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 2.5%, #000 100%);
+}
+
+.hero-layer--magnetar {
+  /* glowing core + dipole field lines, in front of the disk, at its
+     center — layer_positions.json verbatim */
+  left: 43.75%;
+  top: 45.31%;
+  width: 12.5%;
+  height: 7.81%;
+  object-fit: contain;
+}
+
+/* ---------------------------------------------------------------
+   The cover text overlay — cover_text_overlay.png is cover_nature.png
+   with the artwork removed, at the same 880×1168 trim. That crop
+   keeps the square canvas's full height and shaves the sides down to
+   the cover's aspect ratio, so in the SAME percentage system every
+   other .hero-engine child uses:
+     width%  = cover-ratio-w / cover-ratio-h   (the crop keeps this
+               fraction of the canvas's width)
+     left%   = (1 - width%) / 2                 (crop is centered)
+     top/height% = 0 / 100                       (no vertical crop)
+   Because .hero-engine's own box is sized so scale:1 makes this
+   overlay exactly --frame-w wide (see .hero-engine above), the
+   overlay's transparent disk-shaped hole lands exactly on the live
+   disk at every moment, automatically, in both Beat 1/2 (small,
+   scaled up) and the Beat-3 settle (scale 1, filling the frame).
+------------------------------------------------------------------ */
+.hero-layer--overlay {
+  top: 0;
   height: 100%;
-  object-fit: cover;
+  left: calc((100% - 100% * var(--cover-ratio-w) / var(--cover-ratio-h)) / 2);
+  width: calc(100% * var(--cover-ratio-w) / var(--cover-ratio-h));
+  object-fit: fill;
+  opacity: 0;
 }
 
 /* ---------------------------------------------------------------
@@ -336,8 +405,6 @@
   }
 
   .hero-cover-frame--static {
-    position: static;
-    transform: none;
     width: var(--frame-w);
     height: auto;
     aspect-ratio: var(--cover-ratio-w) / var(--cover-ratio-h);

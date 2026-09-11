@@ -13,7 +13,10 @@
   <!-- The hero's heaviest frames, warmed up early so Beat 1 never pops in. -->
   <link rel="preload" as="image" href="assets/cover/bg_environment.png" fetchpriority="high" />
   <link rel="preload" as="image" href="assets/cover/disk_foreground.png" fetchpriority="high" />
-  <link rel="preload" as="image" href="assets/cover_art.jpeg" />
+  <link rel="preload" as="image" href="assets/cover/magnetar_core.png" fetchpriority="high" />
+  <link rel="preload" as="image" href="assets/cover/jet_upper.png" />
+  <link rel="preload" as="image" href="assets/cover/jet_lower.png" />
+  <link rel="preload" as="image" href="assets/cover/cover_text_overlay.png" />
   <link rel="preload" as="image" href="assets/cover_nature.png" />
 
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
@@ -23,31 +26,52 @@
   <section class="hero" data-hero>
     <div class="hero-pin" data-hero-pin>
 
-      <div class="hero-cover-frame" data-hero-frame>
-        <div class="hero-stage" data-hero-stage>
-          <img class="hero-layer hero-layer--bg" data-hero-bg
-               src="assets/cover/bg_environment.png" alt="" />
-          <img class="hero-layer hero-layer--jetpulse" data-hero-jetpulse
-               src="assets/cover/bg_environment.png" alt="" />
+      <!-- Two independently-scaled elements, siblings so neither's
+           transform touches the other:
+             .hero-stage  — bg_environment + corner haze. Sized to
+                            100vmax (== max(100vw,100vh)) so it always
+                            covers the viewport — no bars, any aspect.
+             .hero-engine — disk + magnetar + all four jet pieces +
+                            the cover's text overlay, ONE rigid group.
+                            Scaled independently of the stage (see
+                            hero.js) so the disk sits small and
+                            contained, matching cover_art.jpeg. Every
+                            piece here shares a single parallax
+                            transform applied to .hero-engine itself —
+                            never one transform per child — so the
+                            jets are physically fused to the disk at
+                            every scroll position. -->
+      <div class="hero-stage" data-hero-stage>
+        <img class="hero-layer hero-layer--bg" data-hero-bg
+             src="assets/cover/bg_environment.png" alt="" />
+        <img class="hero-layer hero-layer--haze haze-1" src="assets/cover/haze_1.png" alt="" />
+        <img class="hero-layer hero-layer--haze haze-2" src="assets/cover/haze_2.png" alt="" />
+        <img class="hero-layer hero-layer--haze haze-3" src="assets/cover/haze_3.png" alt="" />
+        <img class="hero-layer hero-layer--haze haze-4" src="assets/cover/haze_4.png" alt="" />
+      </div>
 
-          <img class="hero-layer hero-layer--haze haze-1" src="assets/cover/haze_1.png" alt="" />
-          <img class="hero-layer hero-layer--haze haze-2" src="assets/cover/haze_2.png" alt="" />
-
-          <img class="hero-layer hero-layer--disk" data-hero-disk
-               src="assets/cover/disk_foreground.png" alt="" />
-
-          <img class="hero-layer hero-layer--haze haze-3" src="assets/cover/haze_3.png" alt="" />
-          <img class="hero-layer hero-layer--haze haze-4" src="assets/cover/haze_4.png" alt="" />
-          <img class="hero-layer hero-layer--haze haze-5" src="assets/cover/haze_5.png" alt="" />
-          <img class="hero-layer hero-layer--haze haze-6" src="assets/cover/haze_6.png" alt="" />
-
-          <img class="hero-layer hero-layer--art" data-hero-art
-               src="assets/cover_art.jpeg" alt="" />
-        </div>
-
-        <img class="hero-layer hero-layer--cover" data-hero-cover
-             src="assets/cover_nature.png"
-             alt="Nature magazine cover, 12 March 2026: “Power Sourced — the extreme physics at the heart of superluminous supernovae,” featuring the SN 2024afav accretion disk and relativistic jet." />
+      <div class="hero-engine" data-hero-engine>
+        <img class="hero-layer hero-layer--jetglow jetglow-1" data-hero-jetglow-1
+             src="assets/cover/jet_glow_1.png" alt="" />
+        <img class="hero-layer hero-layer--jetglow jetglow-2" data-hero-jetglow-2
+             src="assets/cover/jet_glow_2.png" alt="" />
+        <img class="hero-layer hero-layer--jet-lower" data-hero-jet-lower
+             src="assets/cover/jet_lower.png" alt="" />
+        <img class="hero-layer hero-layer--disk" data-hero-disk
+             src="assets/cover/disk_foreground.png" alt="" />
+        <img class="hero-layer hero-layer--magnetar" data-hero-magnetar
+             src="assets/cover/magnetar_core.png" alt="" />
+        <img class="hero-layer hero-layer--jet-upper" data-hero-jet-upper
+             src="assets/cover/jet_upper.png" alt="" />
+        <!-- The authentic Nature masthead + cover text, transparent
+             where the artwork shows through. Positioned at the exact
+             crop this asset represents of the shared square canvas
+             (see hero.css) so its negative space always registers
+             over the live disk — this IS the cover reveal, not a
+             crossfade to a flat image. -->
+        <img class="hero-layer hero-layer--overlay" data-hero-overlay
+             src="assets/cover/cover_text_overlay.png" alt=""
+             role="img" aria-label="Nature magazine cover text: “Power Sourced — the extreme physics at the heart of superluminous supernovae,” 12 March 2026." />
       </div>
 
       <div class="hero-frame-bar hero-frame-bar--left" data-hero-bar="left"></div>
@@ -56,7 +80,7 @@
       <div class="hero-frame-bar hero-frame-bar--bottom" data-hero-bar="bottom"></div>
 
       <div class="hero-copy" data-hero-copy>
-        <p class="hero-eyebrow">SN 2024afav</p>
+        <p class="hero-eyebrow">SN 2024AFAV</p>
         <h1 class="hero-title">The supernova that chirps.</h1>
         <p class="hero-dek">A dying star&rsquo;s light, oscillating faster and faster — the fingerprint of a newborn magnetar warping spacetime.</p>
       </div>
@@ -73,12 +97,13 @@
       </p>
     </div>
 
-    <!-- Reduced-motion fallback: no pin, no scroll-jacking, no ambient
-         loop. Beat 1 renders statically inside .hero-pin at rest
-         (see hero.css); this block gives reduced-motion users a
-         direct, static path to the Beat-3 payoff below it. -->
+    <!-- Reduced-motion fallback: no pin, no scroll-jacking, no
+         animation at all. This is the one place cover_nature.png is
+         still used — a flat, static, maximally-robust preview for
+         users who've asked for no motion, entirely separate from the
+         live text-overlay reveal above. -->
     <div class="hero-static-resolve">
-      <div class="hero-cover-frame hero-cover-frame--static">
+      <div class="hero-cover-frame--static">
         <img src="assets/cover_nature.png"
              alt="Nature magazine cover, 12 March 2026: “Power Sourced — the extreme physics at the heart of superluminous supernovae,” featuring the SN 2024afav accretion disk and relativistic jet." />
       </div>

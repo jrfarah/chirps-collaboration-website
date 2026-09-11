@@ -1,0 +1,17 @@
+{
+  "canvas": "square 1:1 (positions are % of the square stage)",
+  "z_order_back_to_front": [
+    "bg_environment", "haze_corners", "jet_glow_1", "jet_glow_2",
+    "jet_lower", "disk_foreground", "magnetar_core", "jet_upper"
+  ],
+  "layers": {
+    "bg_environment": {"left": 0.0, "top": 0.0, "width": 100.0, "height": 100.0, "note": "opaque background + ambient jet haze; scale up ~110% for parallax headroom"},
+    "jet_glow_1":     {"left": 25.0, "top": 0.0,   "width": 50.0,  "height": 15.62, "note": "top jet base flare"},
+    "jet_glow_2":     {"left": 25.0, "top": 84.38, "width": 50.0,  "height": 15.62, "note": "bottom jet base flare"},
+    "jet_lower":      {"left": 48.44, "top": 60.94, "width": 3.12, "height": 39.06, "note": "lower jet beam; behind disk"},
+    "disk_foreground":{"left": 12.5, "top": 34.38, "width": 68.75,"height": 37.5,  "note": "accretion disk; the rotation target"},
+    "magnetar_core":  {"left": 43.75,"top": 45.31, "width": 12.5, "height": 7.81,  "note": "magnetar + dipole field lines; IN FRONT of disk"},
+    "jet_upper":      {"left": 48.44,"top": 0.0,   "width": 3.12, "height": 53.12, "note": "upper jet beam; crosses in FRONT"},
+    "haze_corners":   {"note": "haze_1..4 fill the four canvas corners ~36% x ~50% each; low-opacity depth only"}
+  }
+}
