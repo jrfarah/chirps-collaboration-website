@@ -39,6 +39,8 @@
                                     same square canvas, see below)
         .hero-frame-bar × 4    margins that close in to the cover's
                                 trim size, concurrent with the overlay
+        .hero-layer--nature    cover_nature.png — the tail-end
+                                crossfade target, once assembly is done
         .hero-copy             eyebrow / title / dek
         .hero-scrollcue
         .hero-caption
@@ -99,10 +101,11 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  /* Headroom so bg's own edge can never enter frame while the stage
-     parallaxes — this is what caused the horizontal-seam glitch when
-     it was too tight in an earlier pass. */
-  transform: scale(1.35);
+  /* Scale is set in hero.js (computeEdgeSafeScale), not here — it's
+     computed from the layer's actual max parallax displacement, not
+     a guessed constant, and applying it via GSAP alongside the same
+     element's scroll-driven transform avoids a separate CSS transform
+     fighting the JS one. See hero.js for the formula and reasoning. */
 }
 
 .hero-layer--haze {
@@ -225,6 +228,30 @@
   width: calc(100% * var(--cover-ratio-w) / var(--cover-ratio-h));
   object-fit: fill;
   opacity: 0;
+}
+
+/* ---------------------------------------------------------------
+   The published cover — cover_nature.png, the same 880×1168 asset
+   cover_text_overlay.png was cut from, so it shares that overlay's
+   exact registration. Sized/centered to --frame-w/--frame-h directly
+   (a frame-level sibling, not nested in .hero-engine) so it stays put
+   at its final size while the engine's own scale settles underneath
+   it — the tail-end crossfade (hero.js) fades this in as the live
+   stage+engine composition fades out, once assembly is complete.
+------------------------------------------------------------------ */
+.hero-layer--nature {
+  top: 50%;
+  left: 50%;
+  width: var(--frame-w);
+  height: var(--frame-h);
+  object-fit: cover;
+  opacity: 0;
+  /* No CSS transform here — hero.js sets xPercent/yPercent (matching
+     .hero-engine's own centering pattern) instead of a static
+     translate(-50%,-50%), because .hero-engine sits a few percent off
+     dead-center by the time this crossfades in (its constant "weak
+     drift" offset, settled). This element is pre-positioned to that
+     same offset so the two register instead of visibly jumping. */
 }
 
 /* ---------------------------------------------------------------

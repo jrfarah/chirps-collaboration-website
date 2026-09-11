@@ -79,6 +79,15 @@
       <div class="hero-frame-bar hero-frame-bar--top" data-hero-bar="top"></div>
       <div class="hero-frame-bar hero-frame-bar--bottom" data-hero-bar="bottom"></div>
 
+      <!-- The published cover, once assembly (overlay + bars) is
+           complete: a single tail-end crossfade from the live
+           stage+engine composition to this real, pixel-clean asset —
+           see hero.js. Same source crop as the text overlay above, so
+           it registers on the same pixels rather than jumping. -->
+      <img class="hero-layer hero-layer--nature" data-hero-nature
+           src="assets/cover_nature.png"
+           alt="Nature magazine cover, 12 March 2026: “Power Sourced — the extreme physics at the heart of superluminous supernovae,” featuring the SN 2024afav accretion disk and relativistic jet." />
+
       <div class="hero-copy" data-hero-copy>
         <p class="hero-eyebrow">SN 2024AFAV</p>
         <h1 class="hero-title">The supernova that chirps.</h1>
@@ -98,10 +107,9 @@
     </div>
 
     <!-- Reduced-motion fallback: no pin, no scroll-jacking, no
-         animation at all. This is the one place cover_nature.png is
-         still used — a flat, static, maximally-robust preview for
-         users who've asked for no motion, entirely separate from the
-         live text-overlay reveal above. -->
+         animation at all — a flat, static, maximally-robust preview
+         (also cover_nature.png) for users who've asked for no motion,
+         entirely separate from the live scroll sequence above. -->
     <div class="hero-static-resolve">
       <div class="hero-cover-frame--static">
         <img src="assets/cover_nature.png"

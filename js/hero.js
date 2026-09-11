@@ -36,15 +36,22 @@
  * per child — nothing inside it can ever drift apart from anything
  * else inside it, at any scroll position, by construction.
  *
- * Beat 3 is a single register-and-reveal, not a crossfade: the text
- * overlay (cover_text_overlay.png — the real Nature masthead/cover
- * text with the artwork cut out) fades and settles in over the still-
- * live engine, and the four --bg bars close to the cover's trim size,
- * at the same time. cover_art.jpeg / cover_nature.png are not used
- * here at all — the live disk showing through the overlay's negative
- * space *is* the cover. (cover_nature.png still backs the separate,
- * fully static prefers-reduced-motion fallback in index.html — a
- * different code path, not part of this reveal.)
+ * Beat 3 has two parts, both monotonic, neither reversing the other:
+ *   1. Register-and-reveal — the text overlay (cover_text_overlay.png,
+ *      the real Nature masthead/cover text with the artwork cut out)
+ *      fades and settles in over the still-live engine, and the four
+ *      --bg bars close to the cover's trim size. No flat image is
+ *      involved yet — the live disk showing through the overlay's
+ *      negative space *is* the cover at this point.
+ *   2. Tail-end crossfade — only once part 1 is fully assembled, the
+ *      live composition (stage + engine, the overlay riding along
+ *      inside engine) fades to 0 opacity while cover_nature.png (the
+ *      same 880×1168 asset the overlay was cut from, so it shares its
+ *      exact registration) fades to 1 — a single dissolve, freezing
+ *      the living scene into the printed artifact, for a pixel-clean
+ *      final frame. Exactly one crossfade, at the very end; nothing
+ *      it touches was visible-and-opaque at the same time as anything
+ *      else beforehand, so this never "triples."
  */
 
 // --- ANIMATED PROPERTIES (scroll-driven timeline only — the ambient
@@ -73,14 +80,23 @@
 //                                          through all of Beat 2, so
 //                                          the object's SIZE is truly
 //                                          still while the dust flies)
-//   overlay opacity              0 → 1     (Beat 3 window only)
-//   overlay scale                1.15 → 1  (Beat 3 window only)
-//   bar scaleX (left/right)      0 → 1     (Beat 3 window only)
-//   bar scaleY (top/bottom)      0 → 1     (Beat 3 window only)
-//   caption opacity              0 → 1     (Beat 3 window only)
-//   caption yPercent             4 → 0     (Beat 3 window only)
+//   overlay opacity              0 → 1     (assembly window)
+//   overlay scale                1.15 → 1  (assembly window)
+//   bar scaleX (left/right)      0 → 1     (assembly window)
+//   bar scaleY (top/bottom)      0 → 1     (assembly window)
+//   caption opacity              0 → 1     (assembly window)
+//   caption yPercent             4 → 0     (assembly window)
+//   stage opacity                1 → 0     (tail crossfade, after
+//                                          assembly is complete)
+//   engine opacity                1 → 0     (tail crossfade — carries
+//                                          the overlay down with it,
+//                                          since it's engine's child)
+//   nature-cover opacity          0 → 1     (tail crossfade)
 //
-// Nothing here is ever animated back toward an earlier value.
+// Nothing here is ever animated back toward an earlier value. Note
+// bg_environment's scale is NOT in this table — it's a fixed, one-
+// time computed value (computeEdgeSafeScale), never animated over
+// scroll at all, so it can't violate monotonicity by definition.
 
 function cssNum(name, el = document.documentElement) {
   return parseFloat(getComputedStyle(el).getPropertyValue(name));
@@ -106,12 +122,14 @@ export async function initHero() {
 
   const pin = hero.querySelector('[data-hero-pin]');
   const stage = hero.querySelector('[data-hero-stage]');
+  const bg = hero.querySelector('[data-hero-bg]');
   const engine = hero.querySelector('[data-hero-engine]');
   const jetLower = hero.querySelector('[data-hero-jet-lower]');
   const jetUpper = hero.querySelector('[data-hero-jet-upper]');
   const jetGlow1 = hero.querySelector('[data-hero-jetglow-1]');
   const jetGlow2 = hero.querySelector('[data-hero-jetglow-2]');
   const overlay = hero.querySelector('[data-hero-overlay]');
+  const natureCover = hero.querySelector('[data-hero-nature]');
   const haze = Array.from(hero.querySelectorAll('.hero-layer--haze'));
   const copy = hero.querySelector('[data-hero-copy]');
   const scrollcue = hero.querySelector('[data-hero-scrollcue]');
@@ -146,6 +164,43 @@ export async function initHero() {
   const isMobile = window.matchMedia('(max-width: 700px)').matches;
   const parallaxScale = isMobile ? 0.6 : 1;
   const dyn = (base) => base * parallaxScale;
+
+  // Single source of truth for how far each parallax layer travels —
+  // read by both the timeline below AND computeEdgeSafeScale, so the
+  // edge-safety headroom is always derived from the actual motion,
+  // never a re-typed guess that could drift out of sync with it.
+  // (parallaxScale only ever shrinks these on mobile, so the base,
+  // unscaled number is always the worst case across breakpoints.)
+  const DRIFT = {
+    stage: 4,
+    engine: 3,
+    haze1: { x: -62, y: 80 },
+    haze2: { x: 66, y: 92 },
+    haze3: { x: 56, y: -72 },
+    haze4: { x: -70, y: -88 },
+  };
+
+  /**
+   * Edge-safety rule: any layer that parallaxes must be scaled up
+   * enough that its own image edge never enters the viewport, at any
+   * scroll position — this is what a too-tight bg_environment scale
+   * used to violate (a hard horizontal seam as its top edge slid into
+   * frame). General formula: for a layer whose box exactly fills its
+   * (possibly oversized) container and that travels up to
+   * maxDriftPercent of that container's own size, the scale needed so
+   * (scaled_size − container_size)/2 stays clear of that travel by at
+   * least marginPercent more is:
+   *
+   *   scale = 1 + 2 × (maxDriftPercent + marginPercent) / 100
+   *
+   * Purely percentage-based, so it doesn't need — and doesn't change
+   * with — measured pixels; it's still recomputed on resize below
+   * simply because it lives inside buildScrollSequence, which resize
+   * already re-runs.
+   */
+  function computeEdgeSafeScale(maxDriftPercent, marginPercent = 6) {
+    return 1 + (2 * (Math.abs(maxDriftPercent) + marginPercent)) / 100;
+  }
 
   /**
    * .hero-engine's CSS size (hero.css) is set so that scale:1 is
@@ -190,10 +245,19 @@ export async function initHero() {
 
   function buildScrollSequence() {
     const k1 = computeEngineStartScale();
+    const bgScale = computeEdgeSafeScale(DRIFT.stage);
 
     gsapLib.set(stage, { xPercent: -50, yPercent: -50 });
+    gsapLib.set(bg, { scale: bgScale });
     gsapLib.set(engine, { xPercent: -50, yPercent: -50, scale: k1 });
     gsapLib.set(overlay, { opacity: 0, scale: 1.15 });
+    // .hero-engine settles at yPercent -50 + dyn(DRIFT.engine), not
+    // dead-center — its constant "weak drift" offset never animates
+    // back to 0 (that would violate monotonicity). Pre-positioning
+    // natureCover to that same offset — rather than true center — is
+    // what makes it register with the live overlay it's crossfading
+    // over instead of jumping a few percent of the frame's height.
+    gsapLib.set(natureCover, { xPercent: -50, yPercent: -50 + dyn(DRIFT.engine), opacity: 0 });
     gsapLib.set([bars.left, bars.right], { scaleX: 0 });
     gsapLib.set([bars.top, bars.bottom], { scaleY: 0 });
     gsapLib.set(copy, { opacity: 1, yPercent: 0 });
@@ -207,30 +271,43 @@ export async function initHero() {
 
     // The dust: strong, fast, each corner its own direction — this is
     // the scene's dynamism. Background drifts far slower beneath it.
-    tl.to(stage, { yPercent: -50 + dyn(4), duration: 1 }, 0);
-    tl.to('.haze-1', { xPercent: dyn(-62), yPercent: dyn(80),  duration: 1 }, 0);
-    tl.to('.haze-2', { xPercent: dyn(66),  yPercent: dyn(92),  duration: 1 }, 0);
-    tl.to('.haze-3', { xPercent: dyn(56),  yPercent: dyn(-72), duration: 1 }, 0);
-    tl.to('.haze-4', { xPercent: dyn(-70), yPercent: dyn(-88), duration: 1 }, 0);
+    tl.to(stage, { yPercent: -50 + dyn(DRIFT.stage), duration: 1 }, 0);
+    tl.to('.haze-1', { xPercent: dyn(DRIFT.haze1.x), yPercent: dyn(DRIFT.haze1.y), duration: 1 }, 0);
+    tl.to('.haze-2', { xPercent: dyn(DRIFT.haze2.x), yPercent: dyn(DRIFT.haze2.y), duration: 1 }, 0);
+    tl.to('.haze-3', { xPercent: dyn(DRIFT.haze3.x), yPercent: dyn(DRIFT.haze3.y), duration: 1 }, 0);
+    tl.to('.haze-4', { xPercent: dyn(DRIFT.haze4.x), yPercent: dyn(DRIFT.haze4.y), duration: 1 }, 0);
 
     // The object: weak drift only, across the whole scroll — its
     // SIZE stays fixed through all of Beat 2 (no scale tween here),
     // which is what actually reads as "still" while the dust flies.
-    tl.to(engine, { yPercent: -50 + dyn(3), duration: 1 }, 0);
+    tl.to(engine, { yPercent: -50 + dyn(DRIFT.engine), duration: 1 }, 0);
 
-    // Beat 3: the real Nature text settles onto the still-live scene,
-    // the engine eases from its Beat-1 scale-up down to 1 (its
-    // frame-matching resting size), and the frame closes to the
-    // cover's trim size — all concurrent, all monotonic, no crossfade
-    // to any flat image. Confining the engine's scale to this window
-    // (rather than spreading it across the whole scroll) is what
-    // keeps it feeling anchored during Beat 2 instead of continuously
-    // zooming — the one moment it resizes is this single assembly.
+    // Beat 3a — assembly: the real Nature text settles onto the
+    // still-live scene, the engine eases from its Beat-1 scale-up
+    // down to 1 (its frame-matching resting size), and the frame
+    // closes to the cover's trim size — all concurrent, all
+    // monotonic, no crossfade yet. Confining the engine's scale to
+    // this window (rather than spreading it across the whole scroll)
+    // is what keeps it feeling anchored during Beat 2 instead of
+    // continuously zooming — the one moment it resizes is here.
     tl.to(engine, { scale: 1, duration: 0.2 }, 0.8);
     tl.to(overlay, { opacity: 1, scale: 1, duration: 0.2 }, 0.8);
     tl.to([bars.left, bars.right], { scaleX: 1, duration: 0.2 }, 0.8);
     tl.to([bars.top, bars.bottom], { scaleY: 1, duration: 0.2 }, 0.8);
     tl.to(caption, { opacity: 1, yPercent: 0, duration: 0.1 }, 0.9);
+
+    // Beat 3b — tail crossfade: only once assembly (above) is done,
+    // one single dissolve from the live composition to the real
+    // cover_nature.png. Positioned at timeline time 1.0 — i.e. after
+    // every tween above has finished — this simply extends the
+    // timeline's total duration rather than editing any position
+    // above, so it can't disturb the already-verified assembly
+    // timing; ScrollTrigger just remaps the new, slightly longer
+    // total onto the same 0→1 scroll range. engine's fade carries the
+    // overlay down with it (its child), so only two opacities are
+    // ever in play here — never three layers stacked at once.
+    tl.to([stage, engine], { opacity: 0, duration: 0.15 }, 1.0);
+    tl.to(natureCover, { opacity: 1, duration: 0.15 }, 1.0);
 
     st = ScrollTrigger.create({
       id: 'hero-main',
