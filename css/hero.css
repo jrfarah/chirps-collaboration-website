@@ -223,7 +223,11 @@
 .hero-layer--haze {
   width: 36%;
   height: auto;
-  opacity: 0.5;
+  opacity: 0.62;
+  /* Modest legibility-preserving lift on top of the opacity bump below
+     — reads as slightly more present dust, not a brighter light source
+     competing with text passing behind it. */
+  filter: brightness(1.15);
   /* Several of the wisp PNGs are cropped by their own canvas edge
      rather than fading fully to transparent — feather every wisp's
      own bounding box so that crop never reads as a hard rectangle
@@ -235,11 +239,14 @@
 /* Hand-placed in the four canvas corners per layer_positions.json's
    haze_corners note (~36% × ~50% each) — not registered to the art.
    These are the "dust": strong, fast, individually-directed parallax
-   (hero.js) is what sells the scene's motion. */
-.haze-1 { left: -2%;  top: -2%;    width: 36%; opacity: 0.4;  transform: rotate(-6deg); }
-.haze-2 { right: -2%; top: -2%;    width: 36%; opacity: 0.38; transform: rotate(8deg) scaleX(-1); }
-.haze-3 { left: -2%;  bottom: -2%; width: 36%; opacity: 0.45; transform: rotate(4deg) scaleY(-1); }
-.haze-4 { right: -2%; bottom: -2%; width: 36%; opacity: 0.4;  transform: rotate(-10deg) scale(-1); }
+   (hero.js) is what sells the scene's motion. Opacity nudged up ~35%
+   relative (was 0.38-0.45) — still corner-anchored and behind all page
+   content (.bg-fixed, z-index:-1), just easier to read as drifting
+   dust rather than barely-there texture. */
+.haze-1 { left: -2%;  top: -2%;    width: 36%; opacity: 0.54; transform: rotate(-6deg); }
+.haze-2 { right: -2%; top: -2%;    width: 36%; opacity: 0.52; transform: rotate(8deg) scaleX(-1); }
+.haze-3 { left: -2%;  bottom: -2%; width: 36%; opacity: 0.60; transform: rotate(4deg) scaleY(-1); }
+.haze-4 { right: -2%; bottom: -2%; width: 36%; opacity: 0.54; transform: rotate(-10deg) scale(-1); }
 
 /* ---------------------------------------------------------------
    Engine — disk + magnetar + jets + the cover text overlay, one
