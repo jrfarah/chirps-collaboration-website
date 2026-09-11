@@ -1,6 +1,10 @@
 /**
- * Entry point. The hero is the only section that exists so far.
+ * Entry point.
  */
 import { initHero } from './hero.js';
+import { initNav } from './nav.js';
+import { initCoverage } from './coverage.js';
 
 initHero();
+initNav();
+initCoverage();

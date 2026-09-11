@@ -1,0 +1,366 @@
+/*
+  Page chrome and body content — everything that isn't the hero.
+  Renders over .bg-fixed (hero.css/hero.js): a near-black backdrop
+  with faint, slow-drifting dust, no bright center element once past
+  the hero. That's already dark enough for --text/--text-dim — no
+  scrim is added here by default. If a specific block later proves
+  unreadable against the dust, give THAT block a local scrim; don't
+  add one globally.
+
+  All values are tokens from tokens.css — no literals, same rule as
+  the rest of the codebase.
+*/
+
+/* ---------------------------------------------------------------
+   Nav — hidden over the hero, fades in once you've scrolled past it
+   (js/nav.js toggles .is-visible at exactly the hero's own end point,
+   .hero's 'bottom bottom' — the same scroll position hero.js's own
+   ScrollTrigers hand off at). Slim and quiet: --text-dim links, a
+   subtle scrim only once visible, never a solid bar.
+------------------------------------------------------------------ */
+.site-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  padding-block: var(--space-3);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-base) var(--ease-weighty),
+              background var(--duration-base) var(--ease-weighty);
+}
+
+.site-nav.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+  background: var(--scrim);
+}
+
+.site-nav__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.site-nav__brand {
+  font-size: var(--step--1);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.site-nav__links {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.site-nav__links a {
+  font-size: var(--step--1);
+  color: var(--text-dim);
+}
+
+/* ---------------------------------------------------------------
+   Section 1 — intro prose. A centered, narrower-than-usual column
+   (not the full 68ch .content measure), left-aligned within that
+   column (centering the paragraphs themselves, at this length, would
+   ragged the line breaks and hurt readability). Body size is
+   deliberately the SAME token as .goal-card__body / .roadmap-station__
+   body / .coverage-card__headline below (--step-1) — one shared
+   "content prose" size across every below-the-fold section,
+   comfortable long-form reading rather than a shouted, oversized lede.
+------------------------------------------------------------------ */
+.section-intro {
+  padding-block: var(--space-8);
+}
+
+.section-intro__col {
+  max-width: 56ch;
+}
+
+.section-intro__lede {
+  font-size: var(--step-1);
+  font-weight: var(--weight-light);
+  line-height: var(--leading-normal);
+  color: var(--text);
+}
+
+.section-intro__lede + .section-intro__lede {
+  margin-top: var(--space-5);
+}
+
+/* ---------------------------------------------------------------
+   Section 2 — three goals, editorial list rather than a card grid:
+   numerals + hairline rules, not boxes/icons/shadows.
+------------------------------------------------------------------ */
+.section-goals {
+  padding-block: var(--space-8);
+}
+
+.goal-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.goal-card {
+  display: grid;
+  grid-template-columns: var(--space-6) 1fr;
+  gap: var(--space-4);
+  padding-block: var(--space-6);
+  border-top: 1px solid var(--line);
+}
+
+.goal-card:last-child {
+  border-bottom: 1px solid var(--line);
+}
+
+.goal-card__index {
+  font-size: var(--step-1);
+  font-weight: var(--weight-light);
+  color: var(--text-faint);
+}
+
+.goal-card__title {
+  font-size: var(--step-1);
+  font-weight: var(--weight-medium);
+  color: var(--text);
+  margin-bottom: var(--space-2);
+}
+
+.goal-card__body {
+  max-width: 46ch;
+  font-size: var(--step-1);
+  font-weight: var(--weight-light);
+  line-height: var(--leading-normal);
+  color: var(--text-dim);
+}
+
+@media (max-width: 700px) {
+  .goal-card {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+}
+
+/* ---------------------------------------------------------------
+   Section 3 — roadmap, as a horizontal timeline — deliberately NOT
+   the Goals treatment (grid + hairline rules): three stations strung
+   along one axis line, left to right, each a node + a small tag
+   number + title + sentence, reading as a forward progression rather
+   than a parallel list of properties. Collapses to a vertical
+   timeline on mobile (same line/node language, rotated).
+------------------------------------------------------------------ */
+.section-roadmap {
+  padding-block: var(--space-8);
+}
+
+/* Shared quiet eyebrow for a section's lead-in line — used here and
+   by .section-coverage below. */
+.section-lead {
+  font-size: var(--step--1);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: var(--space-6);
+}
+
+.roadmap-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-6);
+}
+
+/* The axis line — one continuous stroke behind every node, spanning
+   the full row. Positioned at the node's own vertical center (nodes
+   are --space-4 square, so half of that from the row's top) rather
+   than a hardcoded pixel value, so it stays correct if --space-4 is
+   ever retuned. */
+.roadmap-timeline::before {
+  content: '';
+  position: absolute;
+  top: calc(var(--space-4) / 2);
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--line-raised);
+}
+
+.roadmap-station {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  padding-top: var(--space-6);
+}
+
+/* The node — a small filled dot sitting ON the axis line. Every
+   station has the same padding-top above, so every node lands at the
+   same height, in line with .roadmap-timeline::before. */
+.roadmap-station__node {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--space-4);
+  height: var(--space-4);
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.roadmap-station__index {
+  display: block;
+  font-size: var(--step--1);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-faint);
+  margin-bottom: var(--space-3);
+}
+
+.roadmap-station__title {
+  font-size: var(--step-1);
+  font-weight: var(--weight-medium);
+  color: var(--text);
+  margin-bottom: var(--space-2);
+}
+
+.roadmap-station__body {
+  font-size: var(--step-1);
+  font-weight: var(--weight-light);
+  line-height: var(--leading-normal);
+  color: var(--text-dim);
+}
+
+@media (max-width: 700px) {
+  .roadmap-timeline {
+    flex-direction: column;
+    gap: var(--space-7);
+  }
+
+  /* Axis line rotates to vertical, running the full height of the
+     stacked list instead of the full width of the row. */
+  .roadmap-timeline::before {
+    top: 0;
+    bottom: 0;
+    left: calc(var(--space-4) / 2);
+    right: auto;
+    width: 1px;
+    height: auto;
+  }
+
+  .roadmap-station {
+    padding-top: 0;
+    padding-left: calc(var(--space-4) + var(--space-4));
+  }
+
+  .roadmap-station__node {
+    top: 0.35em;
+    left: 0;
+  }
+}
+
+/* ---------------------------------------------------------------
+   Section 4 — coverage/press gallery. Populated at runtime from
+   data/press.json (js/coverage.js) — the grid below starts empty.
+   Cards are hairline-topped, not boxed panels (same language as
+   .goal-card/.roadmap-station, not a SaaS card grid): a logo mark (or
+   text wordmark fallback), the headline, a quiet "read →" link.
+------------------------------------------------------------------ */
+.section-coverage {
+  padding-block: var(--space-8);
+}
+
+.coverage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-6) var(--space-5);
+}
+
+.coverage-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line);
+}
+
+.coverage-card__mark {
+  display: flex;
+  align-items: center;
+  height: var(--space-5);
+}
+
+.coverage-card__logo {
+  max-width: 7rem;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  object-position: left center;
+  opacity: 0.88;
+  transition: opacity var(--duration-fast) var(--ease-weighty);
+}
+
+.coverage-card:hover .coverage-card__logo {
+  opacity: 1;
+}
+
+/* Text wordmark — hidden by default, shown only once js/coverage.js
+   has confirmed (via the <img>'s own error event) that a domain has
+   no cached logo. Styled to read as a deliberate mark, not a stray
+   label, so a card looks intentional either way. */
+.coverage-card__wordmark {
+  display: none;
+  font-size: var(--step-0);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.coverage-card__mark--fallback .coverage-card__wordmark {
+  display: block;
+}
+
+.coverage-card__headline {
+  flex: 1;
+  font-size: var(--step-0);
+  font-weight: var(--weight-light);
+  line-height: var(--leading-normal);
+  color: var(--text);
+}
+
+.coverage-card__link {
+  align-self: flex-start;
+  font-size: var(--step--1);
+  color: var(--text-dim);
+}
+
+/* ---------------------------------------------------------------
+   Footer — stub.
+------------------------------------------------------------------ */
+.site-footer {
+  padding-block: var(--space-6);
+  border-top: 1px solid var(--line);
+}
+
+.site-footer__inner {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+}
+
+.site-footer__text {
+  font-size: var(--step--1);
+  color: var(--text-faint);
+}
+
+.site-footer__text a {
+  color: inherit;
+}

@@ -72,6 +72,13 @@ a:focus-visible {
   padding-inline: var(--content-pad);
 }
 
+/* Widens a .content column for grid/gallery content (press coverage)
+   that reads better with more columns than a 68ch prose measure
+   allows — still centered, still gutter-padded, just a bigger cap. */
+.content--wide {
+  max-width: var(--content-max-wide);
+}
+
 .full-bleed {
   width: 100%;
   max-width: none;

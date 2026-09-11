@@ -9,16 +9,47 @@
   z_order_back_to_front, split across two independently-scaled groups
   so shrinking one can never reintroduce bars in the other):
     .hero                    tall scroll track (sets pin distance)
-      .hero-pin              the pinned 100vh viewport window
-        .hero-stage            bg + corner haze — sized to always
-                                COVER the viewport (100vmax), so there
-                                is never a pillarbox/letterbox gap.
-                                bg itself carries its own +35% scale
-                                so its edges never enter frame while
-                                it parallaxes.
+      .bg-fixed              position:fixed, full-viewport, z-index:-1
+                              — the persistent backdrop. Lives OUTSIDE
+                              .hero-pin on purpose: .hero-pin only
+                              exists for the hero's own scroll distance
+                              (GSAP tears its pin down once the hero
+                              ends), but this needs to keep rendering,
+                              fixed to the viewport, for the rest of
+                              the page. Being a plain (untransformed)
+                              descendant of .hero — never of .hero-pin —
+                              is what keeps "position:fixed" actually
+                              fixed: a transformed ancestor would
+                              silently rescope it to that ancestor's
+                              box instead of the viewport. z-index:-1
+                              (not DOM order) is what keeps it behind
+                              .hero-pin during the hero AND behind the
+                              plain, unpositioned page content below —
+                              content with no z-index of its own would
+                              otherwise still paint above a z-index:0/
+                              auto fixed element, negative z-index is
+                              required for a true "behind everything"
+                              layer.
+        .hero-stage            bg + corner haze — ONE continuous scene,
+                                sized to always COVER the viewport
+                                (100vmax), so there is never a
+                                pillarbox/letterbox gap. bg itself
+                                carries its own scale-up (computed from
+                                its total drift across the WHOLE page)
+                                so its edges never enter frame while it
+                                parallaxes. Driven by exactly one
+                                ScrollTrigger (buildSceneDrift, hero.js)
+                                spanning top-of-hero to bottom-of-page —
+                                not the hero's own timeline at all, and
+                                never rebuilt or restarted partway down;
+                                the hero's own pinned timeline
+                                (hero-main) never touches this element,
+                                so there's exactly one authority over
+                                its transform, for the life of the page.
           .hero-layer--bg
           .haze-1 … .haze-4     (the four canvas corners — the "dust",
                                   strong/fast parallax)
+      .hero-pin              the pinned 100vh viewport window
         .hero-engine           disk + magnetar + all jet pieces + the
                                 cover's text overlay — ONE rigid group,
                                 sized and scaled independently of the
@@ -42,8 +73,13 @@
                                     same square canvas, see below)
         .hero-frame-bar × 4    margins that close in to the cover's
                                 trim size, concurrent with the overlay
+                                — then fade out again (opacity only,
+                                never re-open) once the crossfade below
+                                has fully held, so the exiting cover has
+                                no opaque margins around it
         .hero-frame-corner × 4 rounds that window's corners, same
-                                radius as .hero-layer--nature below
+                                radius as .hero-layer--nature below;
+                                fades out alongside the bars, same tween
         .hero-layer--nature    cover_nature.png — the tail-end
                                 crossfade target, once assembly is done
         .hero-copy             eyebrow / title / dek
@@ -58,16 +94,31 @@
   position: relative;
   /* Pin length — 460vh (100vh pinned viewport + 360vh of scroll) is
      1.8× the scrollable distance this used to be (was 300vh total,
-     200vh scrollable). Every scroll-driven phase is scrubbed linearly
-     across whatever this is, so lengthening it here is what actually
-     slows the Beat-2 statements' dwell (~1.8× more scroll to fade in/
-     hold/fade out each) without touching their timeline positions in
-     hero.js at all. It equally slows the dust's per-scroll-pixel
-     speed, which is why DRIFT.haze1-4 in hero.js were pushed up well
-     past 1.8× — to counter this stretch AND still feel livelier than
-     before, independent of how long the text now dwells. */
+     200vh scrollable). Every hero-scoped tween (buildScrollSequence)
+     is scrubbed linearly across whatever this is, so lengthening it
+     here is what slows the Beat-2 statements' dwell (~1.8× more
+     scroll to fade in/hold/fade out each) without touching their
+     timeline positions in hero.js at all. This number does NOT affect
+     the dust's speed at all anymore — SCENE_DRIFT/buildSceneDrift
+     (hero.js) is driven by the whole page's scroll length, completely
+     independent of this value, precisely so the two can be tuned
+     separately without fighting each other. */
   height: 460vh;
-  background: var(--bg);
+  /* No background here — and this isn't just redundant with
+     .bg-fixed's own, it's actively required to be absent. .hero is
+     position:relative (z-index:auto), which stacks as a "positioned,
+     stack-level-0" box at the nearest ancestor stacking context —
+     since nothing between .hero and the root establishes one, that's
+     the root itself. .bg-fixed, with its own negative z-index AND its
+     own stacking context (position:fixed always creates one), paints
+     at the EARLIER "negative stack level" step of that same root
+     order — one step before stack-level-0 boxes like .hero. So an
+     opaque background painted here would land on top of .bg-fixed's
+     entire content, hiding bg_environment/dust completely, even
+     though .bg-fixed is z-index:-1 and .hero looks like a plain
+     ancestor. (Found by exactly this: bg_environment was rendering,
+     decoded, fully opaque, correctly positioned — and still
+     invisible, until this line was identified as the culprit.) */
 
   /* The Nature cover's own trim ratio — used to size the closing
      frame bars, and (via --cover-ratio-w/h below) to place the text
@@ -82,12 +133,41 @@
   --frame-margin-y: calc((100vh - var(--frame-h)) / 2);
 }
 
+/* ---------------------------------------------------------------
+   The persistent backdrop — background + dust, fixed to the
+   viewport, behind the entire page (hero through footer). Its own
+   box carries no transform, ever — only .hero-stage inside it does —
+   so it stays truly viewport-fixed rather than getting rescoped to a
+   transformed ancestor. overflow:hidden replaces the clipping
+   .hero-pin used to provide for the (deliberately oversized,
+   100vmax) .hero-stage now that the two are no longer nested.
+   opacity/is-ready mirrors .hero-pin's own reveal-once-decoded gate
+   (hero.js toggles both together) so background and hero content
+   never appear out of step while images are still decoding.
+------------------------------------------------------------------ */
+.bg-fixed {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  z-index: -1;
+  background: var(--bg);
+  opacity: 0;
+}
+
+.bg-fixed.is-ready {
+  opacity: 1;
+  transition: opacity var(--duration-slow) var(--ease-weighty);
+}
+
 .hero-pin {
   position: relative;
+  z-index: 1; /* explicit, so it never depends on auto-stacking order
+                 relative to .bg-fixed's negative z-index */
   width: 100%;
   height: 100vh;
   overflow: hidden;
-  background: var(--bg);
+  /* No background here anymore — .bg-fixed supplies it now, for the
+     whole page, not just the hero. */
   opacity: 0; /* revealed by hero.js once every layer has decoded */
 }
 

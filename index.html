@@ -21,26 +21,34 @@
 
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/ScrollTrigger.min.js"></script>
+
+  <link rel="stylesheet" href="css/content.css" />
 </head>
 <body>
-  <section class="hero" data-hero>
-    <div class="hero-pin" data-hero-pin>
+  <nav class="site-nav" data-site-nav>
+    <div class="site-nav__inner content">
+      <a class="site-nav__brand" href="#top">CHIRP</a>
+      <div class="site-nav__links">
+        <a href="#story">Story</a>
+        <a href="#goals">Goals</a>
+        <a href="#roadmap">Roadmap</a>
+        <a href="#coverage">Coverage</a>
+      </div>
+    </div>
+  </nav>
 
-      <!-- Two independently-scaled elements, siblings so neither's
-           transform touches the other:
-             .hero-stage  — bg_environment + corner haze. Sized to
-                            100vmax (== max(100vw,100vh)) so it always
-                            covers the viewport — no bars, any aspect.
-             .hero-engine — disk + magnetar + all four jet pieces +
-                            the cover's text overlay, ONE rigid group.
-                            Scaled independently of the stage (see
-                            hero.js) so the disk sits small and
-                            contained, matching cover_art.jpeg. Every
-                            piece here shares a single parallax
-                            transform applied to .hero-engine itself —
-                            never one transform per child — so the
-                            jets are physically fused to the disk at
-                            every scroll position. -->
+  <section class="hero" data-hero>
+    <!-- The persistent backdrop: bg_environment + the four dust/haze
+         layers, fixed to the viewport and behind everything on the
+         page, hero through footer. ONE continuous ScrollTrigger
+         (buildSceneDrift, hero.js) drives it for the entire page —
+         not scoped to the hero, never rebuilt or restarted partway
+         down. .hero-stage itself keeps the same CSS it always had;
+         only its parent changed, from .hero-pin (which no longer
+         needs its own background, now that this supplies it for the
+         whole page) to this fixed wrapper, so it outlives the pin
+         instead of being torn down with it. -->
+    <div class="bg-fixed" data-bg-fixed>
       <div class="hero-stage" data-hero-stage>
         <img class="hero-layer hero-layer--bg" data-hero-bg
              src="assets/cover/bg_environment.png" alt="" />
@@ -49,7 +57,19 @@
         <img class="hero-layer hero-layer--haze haze-3" src="assets/cover/haze_3.png" alt="" />
         <img class="hero-layer hero-layer--haze haze-4" src="assets/cover/haze_4.png" alt="" />
       </div>
+    </div>
 
+    <div class="hero-pin" data-hero-pin>
+
+      <!-- .hero-engine — disk + magnetar + all four jet pieces + the
+           cover's text overlay, ONE rigid group. Scaled independently
+           of the (now-persistent) stage (see hero.js) so the disk sits
+           small and contained, matching cover_art.jpeg. Every piece
+           here shares a single parallax transform applied to
+           .hero-engine itself — never one transform per child — so
+           the jets are physically fused to the disk at every scroll
+           position. Hero-scoped only: unlike the stage, this does NOT
+           persist past the hero. -->
       <div class="hero-engine" data-hero-engine>
         <!-- Both jet beams sit BEHIND their own base glow (glow reads
              as the wider, softer light the beam emerges from — it
@@ -158,6 +178,95 @@
       </p>
     </div>
   </section>
+
+  <!-- Everything below scrolls over the persistent .bg-fixed backdrop
+       (background + dust only — the engine is hero-scoped and gone by
+       now). No scrim added by default: the background is near-black
+       with faint dust, already dark enough for --text/--text-dim. -->
+  <main>
+    <section id="story" class="section-intro">
+      <div class="content section-intro__col">
+        <p class="section-intro__lede">Most supernovae fade. This one sang: its light rising and falling in a perfect rhythm that quickened as the star died. We have an idea as to why. Deep inside the wreckage, a newborn magnetar is dragging spacetime itself and the matter around it into a slow wobble like a top, and each turn of that wobble reaches us as another beat of light. If true, it would be the first time we have ever seen such a thing.</p>
+        <p class="section-intro__lede">We are not certain it is the whole story, which is exactly why we're eager to learn more. Whatever is making these explosions chirp, the explanation runs through some of the most extreme physics in the universe: nuclear matter, magnetic fields beyond anything we can imagine, gravity strong enough to twist space and time itself. Our goal is simple: we want to find more of them, and understand how they tick. Every new chirp we find is a fresh chance to be surprised.</p>
+      </div>
+    </section>
+
+    <section id="goals" class="section-goals">
+      <div class="content">
+        <ol class="goal-list">
+          <li class="goal-card">
+            <span class="goal-card__index">01</span>
+            <div class="goal-card__copy">
+              <h3 class="goal-card__title">A cosmic clock.</h3>
+              <p class="goal-card__body">A supernova whose light chirps as it fades, oscillating faster and faster as a newborn magnetar's disk precesses.</p>
+            </div>
+          </li>
+          <li class="goal-card">
+            <span class="goal-card__index">02</span>
+            <div class="goal-card__copy">
+              <h3 class="goal-card__title">A new probe.</h3>
+              <p class="goal-card__body">The chirp encodes the spin, field, and structure of a neutron star in the first days of its life, presenting the possibility of a measurement nothing else can make.</p>
+            </div>
+          </li>
+          <li class="goal-card">
+            <span class="goal-card__index">03</span>
+            <div class="goal-card__copy">
+              <h3 class="goal-card__title">A population waiting.</h3>
+              <p class="goal-card__body">SN 2024afav was the first. Rubin/LSST should find many more, and each one is a rich laboratory of unexplored physics.</p>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="roadmap" class="section-roadmap">
+      <div class="content">
+        <p class="section-lead">Where we're going</p>
+        <ol class="roadmap-timeline">
+          <li class="roadmap-station">
+            <span class="roadmap-station__node" aria-hidden="true"></span>
+            <span class="roadmap-station__index">01</span>
+            <h3 class="roadmap-station__title">Find the population.</h3>
+            <p class="roadmap-station__body">Build detection tools to catch chirping superluminous supernovae in Rubin/LSST — turning one object into a sample.</p>
+          </li>
+          <li class="roadmap-station">
+            <span class="roadmap-station__node" aria-hidden="true"></span>
+            <span class="roadmap-station__index">02</span>
+            <h3 class="roadmap-station__title">Model the engine.</h3>
+            <p class="roadmap-station__body">Refine the magnetar–disk model that reproduces the light curve and the chirp together, and pin down what the chirp's evolution encodes about the central engine.</p>
+          </li>
+          <li class="roadmap-station">
+            <span class="roadmap-station__node" aria-hidden="true"></span>
+            <span class="roadmap-station__index">03</span>
+            <h3 class="roadmap-station__title">Weigh a newborn neutron star.</h3>
+            <p class="roadmap-station__body">Use the chirp as a clock to constrain the spin, magnetic field, and interior of a neutron star days after its birth — connecting supernova observations to the physics of dense matter.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="coverage" class="section-coverage">
+      <div class="content content--wide">
+        <p class="section-lead">In the press</p>
+        <!-- Populated at load from data/press.json — see js/coverage.js.
+             Each card: outlet logo (assets/logos/<domain>.png, fetched
+             ahead of time) or, failing that, a text wordmark of the
+             outlet name; the headline; a "read →" link to the piece. -->
+        <div class="coverage-grid" data-coverage-grid></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="content site-footer__inner">
+      <p class="site-footer__text">CHIRP — SN 2024afav</p>
+      <p class="site-footer__text">
+        <a href="https://www.nature.com/nature/volumes/651/issues/8105" target="_blank" rel="noopener">
+          Nature, vol.&nbsp;651 — 12 March 2026. Cover story.
+        </a>
+      </p>
+    </div>
+  </footer>
 
   <script type="module" src="js/main.js"></script>
 </body>
