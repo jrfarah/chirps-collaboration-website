@@ -227,26 +227,39 @@
   /* Modest legibility-preserving lift on top of the opacity bump below
      — reads as slightly more present dust, not a brighter light source
      competing with text passing behind it. */
-  filter: brightness(1.15);
+  filter: brightness(1.22);
   /* Several of the wisp PNGs are cropped by their own canvas edge
      rather than fading fully to transparent — feather every wisp's
      own bounding box so that crop never reads as a hard rectangle
-     against the dark sky. */
-  -webkit-mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, #000 50%, transparent 100%);
-  mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, #000 50%, transparent 100%);
+     against the dark sky. Radius stays just under the 50%
+     center-to-edge distance (48%, not the original 60%) so the fade
+     still finishes — alpha 0 — before the img's own rectangular edge,
+     which is what removes the hard line. But the opaque core now
+     holds out to 65% of THAT radius (~31% of the box, matching the
+     original 30%) instead of 20% — the first pass shrank the core
+     as well as the radius, which was the actual mistake: it was
+     quietly eating the wisp's own mid-frame dust (the part reaching
+     toward the page's center, the "looking through fog" effect),
+     not just the hard-cropped outer edge. Now only the outer ~17% of
+     the box (31%→48%) is the feather zone; everything inside that is
+     back to full strength. Corners still fade out earliest, same as
+     always — they're farther from center than the ellipse reaches on
+     any axis. */
+  -webkit-mask-image: radial-gradient(ellipse 48% 48% at 50% 50%, #000 65%, transparent 100%);
+  mask-image: radial-gradient(ellipse 48% 48% at 50% 50%, #000 65%, transparent 100%);
 }
 
 /* Hand-placed in the four canvas corners per layer_positions.json's
    haze_corners note (~36% × ~50% each) — not registered to the art.
    These are the "dust": strong, fast, individually-directed parallax
-   (hero.js) is what sells the scene's motion. Opacity nudged up ~35%
-   relative (was 0.38-0.45) — still corner-anchored and behind all page
-   content (.bg-fixed, z-index:-1), just easier to read as drifting
-   dust rather than barely-there texture. */
-.haze-1 { left: -2%;  top: -2%;    width: 36%; opacity: 0.54; transform: rotate(-6deg); }
-.haze-2 { right: -2%; top: -2%;    width: 36%; opacity: 0.52; transform: rotate(8deg) scaleX(-1); }
-.haze-3 { left: -2%;  bottom: -2%; width: 36%; opacity: 0.60; transform: rotate(4deg) scaleY(-1); }
-.haze-4 { right: -2%; bottom: -2%; width: 36%; opacity: 0.54; transform: rotate(-10deg) scale(-1); }
+   (hero.js) is what sells the scene's motion. Opacity nudged up from
+   the original 0.38-0.45 in two small passes — still corner-anchored
+   and behind all page content (.bg-fixed, z-index:-1), just easier to
+   read as drifting dust rather than barely-there texture. */
+.haze-1 { left: -2%;  top: -2%;    width: 36%; opacity: 0.62; transform: rotate(-6deg); }
+.haze-2 { right: -2%; top: -2%;    width: 36%; opacity: 0.60; transform: rotate(8deg) scaleX(-1); }
+.haze-3 { left: -2%;  bottom: -2%; width: 36%; opacity: 0.68; transform: rotate(4deg) scaleY(-1); }
+.haze-4 { right: -2%; bottom: -2%; width: 36%; opacity: 0.62; transform: rotate(-10deg) scale(-1); }
 
 /* ---------------------------------------------------------------
    Engine — disk + magnetar + jets + the cover text overlay, one
