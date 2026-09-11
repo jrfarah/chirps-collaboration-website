@@ -341,7 +341,19 @@ export async function initHero() {
    * width. This is the only JS measurement in the whole sequence.
    */
   function computeEngineStartScale() {
-    const naturalWidth = engine.getBoundingClientRect().width || 1;
+    // getBoundingClientRect() would return the POST-transform box — on
+    // every rebuild (every resize), engine already carries whatever
+    // scale the previous buildScrollSequence() call left on it (killing
+    // a tween/ScrollTrigger doesn't revert the properties it set), so
+    // measuring the rect here would feed that leftover scale back into
+    // the next one: k1_new = k1_true / k1_previous. That's a period-2
+    // oscillation between k1_true and 1, not a real remeasurement — the
+    // bug this function used to have. getComputedStyle().width is the
+    // CSS layout width (--frame-w-driven, hero.css), which `transform`
+    // never touches, so it's a stable, untransformed read no matter
+    // what scale is currently applied — the single source of truth
+    // both this function and hero.css's own sizing agree on.
+    const naturalWidth = parseFloat(getComputedStyle(engine).width) || 1;
     const targetDiskWidth = 0.35 * window.innerWidth;
     const targetEngineWidth = targetDiskWidth / 0.6875; // disk is 68.75% of engine
     return targetEngineWidth / naturalWidth;
