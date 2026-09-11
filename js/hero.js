@@ -6,15 +6,20 @@
  * CSS size (hero.css) is deliberately the exact size at which scale:1
  * makes the text overlay (and cover_nature.png, sharing its box — see
  * below) fill --frame-w — i.e. its *resting* scale is Beat 3's
- * registered, frame-filling state. Beat 1's "small, contained, ~35%
- * of viewport width" look is a scale-up applied on top of that
- * (computed once, see computeEngineStartScale). That scale-up holds
- * fixed through all of Beat 2 — the object's size never changes while
- * the dust flies — and only eases down to 1 during the Beat 3
- * assembly window, monotonically, one direction, so it reads as the
- * frame gathering itself around a still object in one deliberate
- * motion, never a reversal. Hero-scoped only: this does NOT persist
- * past the hero (see .bg-fixed below for what does).
+ * registered, frame-filling state. Beat 1's look is a scale-up applied
+ * on top of that (computed once, see computeEngineStartScale): the
+ * rule is that the jet+glow assembly (jet_glow_1 at top:0%, jet_upper
+ * from top:0%, jet_lower/jet_glow_2 to bottom:100% — see
+ * assets/cover/layer_positions.json, already spanning the engine's
+ * full square box edge-to-edge by construction) fills the viewport
+ * top-to-bottom exactly, so the top glow touches the top of the
+ * window and the bottom glow touches the bottom, full-bleed. That
+ * scale-up holds fixed through all of Beat 2 — the object's size
+ * never changes while the dust flies — and only eases down to 1
+ * during the Beat 3 assembly window, monotonically, one direction, so
+ * it reads as the frame gathering itself around a still object in one
+ * deliberate motion, never a reversal. Hero-scoped only: this does
+ * NOT persist past the hero (see .bg-fixed below for what does).
  *
  * Engine's own position is a plain, unanimated true-center settle
  * (xPercent/yPercent -50/-50, set once, never tweened) — no residual
@@ -332,13 +337,18 @@ export async function initHero() {
   /**
    * .hero-engine's CSS size (hero.css) is set so that scale:1 is
    * exactly the size at which the text overlay fills --frame-w — the
-   * registered, Beat-3 resting state. For Beat 1 we want the disk
-   * (68.75% of the engine's box) to read at ~35% of viewport width
-   * instead, which is a DIFFERENT, viewport-dependent size with no
-   * fixed ratio to the frame-matching one — so the one extra scale
-   * factor needed to get from "frame-matching" to "Beat-1 composition"
-   * is measured, once, off the engine's actual laid-out (untransformed)
-   * width. This is the only JS measurement in the whole sequence.
+   * registered, Beat-3 resting state. For Beat 1 the rule is instead:
+   * the jet+glow assembly (jet_glow_1/jet_upper starting at the
+   * engine's own top edge, jet_lower/jet_glow_2 reaching its bottom
+   * edge — layer_positions.json, already 0%-to-100% of the engine's
+   * square box by construction) should fill the viewport exactly
+   * top-to-bottom, full-bleed. Engine is centered (top:50%,
+   * yPercent:-50), so that's just: scaled height === innerHeight. That
+   * target has no fixed ratio to the frame-matching size, so the one
+   * extra scale factor needed to get from "frame-matching" to
+   * "Beat-1 composition" is measured, once, off the engine's actual
+   * laid-out (untransformed) height. This is the only JS measurement
+   * in the whole sequence.
    */
   function computeEngineStartScale() {
     // getBoundingClientRect() would return the POST-transform box — on
@@ -348,15 +358,13 @@ export async function initHero() {
     // measuring the rect here would feed that leftover scale back into
     // the next one: k1_new = k1_true / k1_previous. That's a period-2
     // oscillation between k1_true and 1, not a real remeasurement — the
-    // bug this function used to have. getComputedStyle().width is the
-    // CSS layout width (--frame-w-driven, hero.css), which `transform`
+    // bug this function used to have. getComputedStyle().height is the
+    // CSS layout height (--frame-w-driven, hero.css), which `transform`
     // never touches, so it's a stable, untransformed read no matter
     // what scale is currently applied — the single source of truth
     // both this function and hero.css's own sizing agree on.
-    const naturalWidth = parseFloat(getComputedStyle(engine).width) || 1;
-    const targetDiskWidth = 0.35 * window.innerWidth;
-    const targetEngineWidth = targetDiskWidth / 0.6875; // disk is 68.75% of engine
-    return targetEngineWidth / naturalWidth;
+    const naturalHeight = parseFloat(getComputedStyle(engine).height) || 1;
+    return window.innerHeight / naturalHeight;
   }
 
   // --- Beat-1 ambient idle loop (wall-clock, not scroll-linked) -----
