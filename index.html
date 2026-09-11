@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CHIRP</title>
+
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/fonts.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/hero.css" />
+
+  <!-- The hero's heaviest frames, warmed up early so Beat 1 never pops in. -->
+  <link rel="preload" as="image" href="assets/cover/bg_environment.png" fetchpriority="high" />
+  <link rel="preload" as="image" href="assets/cover/disk_foreground.png" fetchpriority="high" />
+  <link rel="preload" as="image" href="assets/cover_art.jpeg" />
+  <link rel="preload" as="image" href="assets/cover_nature.png" />
+
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/ScrollTrigger.min.js"></script>
+</head>
+<body>
+  <section class="hero" data-hero>
+    <div class="hero-pin" data-hero-pin>
+
+      <div class="hero-cover-frame" data-hero-frame>
+        <div class="hero-stage" data-hero-stage>
+          <img class="hero-layer hero-layer--bg" data-hero-bg
+               src="assets/cover/bg_environment.png" alt="" />
+          <img class="hero-layer hero-layer--jetpulse" data-hero-jetpulse
+               src="assets/cover/bg_environment.png" alt="" />
+
+          <img class="hero-layer hero-layer--haze haze-1" src="assets/cover/haze_1.png" alt="" />
+          <img class="hero-layer hero-layer--haze haze-2" src="assets/cover/haze_2.png" alt="" />
+
+          <img class="hero-layer hero-layer--disk" data-hero-disk
+               src="assets/cover/disk_foreground.png" alt="" />
+
+          <img class="hero-layer hero-layer--haze haze-3" src="assets/cover/haze_3.png" alt="" />
+          <img class="hero-layer hero-layer--haze haze-4" src="assets/cover/haze_4.png" alt="" />
+          <img class="hero-layer hero-layer--haze haze-5" src="assets/cover/haze_5.png" alt="" />
+          <img class="hero-layer hero-layer--haze haze-6" src="assets/cover/haze_6.png" alt="" />
+
+          <img class="hero-layer hero-layer--art" data-hero-art
+               src="assets/cover_art.jpeg" alt="" />
+        </div>
+
+        <img class="hero-layer hero-layer--cover" data-hero-cover
+             src="assets/cover_nature.png"
+             alt="Nature magazine cover, 12 March 2026: “Power Sourced — the extreme physics at the heart of superluminous supernovae,” featuring the SN 2024afav accretion disk and relativistic jet." />
+      </div>
+
+      <div class="hero-frame-bar hero-frame-bar--left" data-hero-bar="left"></div>
+      <div class="hero-frame-bar hero-frame-bar--right" data-hero-bar="right"></div>
+      <div class="hero-frame-bar hero-frame-bar--top" data-hero-bar="top"></div>
+      <div class="hero-frame-bar hero-frame-bar--bottom" data-hero-bar="bottom"></div>
+
+      <div class="hero-copy" data-hero-copy>
+        <p class="hero-eyebrow">SN 2024afav</p>
+        <h1 class="hero-title">The supernova that chirps.</h1>
+        <p class="hero-dek">A dying star&rsquo;s light, oscillating faster and faster — the fingerprint of a newborn magnetar warping spacetime.</p>
+      </div>
+
+      <div class="hero-scrollcue" data-hero-scrollcue aria-hidden="true">
+        <span class="hero-scrollcue__line"></span>
+        <span class="hero-scrollcue__label">Scroll</span>
+      </div>
+
+      <p class="hero-caption" data-hero-caption>
+        <a href="https://www.nature.com/nature/volumes/651/issues/8105" target="_blank" rel="noopener">
+          Nature, vol.&nbsp;651 — 12 March 2026. Cover story.
+        </a>
+      </p>
+    </div>
+
+    <!-- Reduced-motion fallback: no pin, no scroll-jacking, no ambient
+         loop. Beat 1 renders statically inside .hero-pin at rest
+         (see hero.css); this block gives reduced-motion users a
+         direct, static path to the Beat-3 payoff below it. -->
+    <div class="hero-static-resolve">
+      <div class="hero-cover-frame hero-cover-frame--static">
+        <img src="assets/cover_nature.png"
+             alt="Nature magazine cover, 12 March 2026: “Power Sourced — the extreme physics at the heart of superluminous supernovae,” featuring the SN 2024afav accretion disk and relativistic jet." />
+      </div>
+      <p class="hero-caption hero-caption--static">
+        <a href="https://www.nature.com/nature/volumes/651/issues/8105" target="_blank" rel="noopener">
+          Nature, vol.&nbsp;651 — 12 March 2026. Cover story.
+        </a>
+      </p>
+    </div>
+  </section>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

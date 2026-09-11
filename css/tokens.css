@@ -1,0 +1,108 @@
+/*
+  Design tokens — the single source of truth for the visual system.
+  No color, size, spacing, or timing value should appear anywhere else
+  in the codebase outside of this file. If a value is needed and no
+  token fits, add a token here first.
+
+  Palette is derived from the accretion-disk cover art: a warm
+  near-black ground, a cold blue-white jet accent, and a dusty
+  rust/mauve disk accent used sparingly. Hexes are placeholders to be
+  tuned once the art is dropped in — keep every consumer pointed at
+  the custom property, never the literal value, so retuning here is
+  the only edit needed.
+*/
+
+:root {
+  /* ---------------------------------------------------------------
+     Color — dark, warm-neutral ground; accents used sparingly.
+  --------------------------------------------------------------- */
+  --bg: #0a0706;              /* deep near-black, warm brown undertone */
+  --bg-raised: #16110d;       /* slightly lifted warm charcoal (panels, nav) */
+  --bg-overlay: #1f1712;      /* one step further up, for hover/active states */
+
+  --text: #ece6df;            /* warm bone white — primary text */
+  --text-dim: #948b81;        /* muted warm grey — secondary text, captions */
+  --text-faint: #5c554d;      /* lowest-emphasis text, disabled states */
+
+  --accent: #9db8d8;          /* cold blue-white of the jet — restrained use */
+  --accent-warm: #a56b6b;     /* dusty rust/mauve of the disk — secondary */
+
+  --line: rgba(236, 230, 223, 0.1);   /* hairline dividers on --bg */
+  --line-raised: rgba(236, 230, 223, 0.14); /* hairline dividers on --bg-raised */
+
+  /* ---------------------------------------------------------------
+     Type — one family (Geist), no monospace anywhere. Numerals are
+     set in Geist with tabular figures via --numeric-variant.
+  --------------------------------------------------------------- */
+  --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --numeric-variant: tabular-nums;
+
+  --weight-light: 300;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-bold: 700;
+
+  /* Fluid, editorial type scale. Step 0 is body text. */
+  --step--1: clamp(0.8rem, 0.78rem + 0.14vw, 0.9375rem);
+  --step-0:  clamp(1rem, 0.96rem + 0.22vw, 1.125rem);
+  --step-1:  clamp(1.25rem, 1.16rem + 0.47vw, 1.5rem);
+  --step-2:  clamp(1.5rem, 1.32rem + 0.9vw, 2rem);
+  --step-3:  clamp(1.875rem, 1.53rem + 1.7vw, 2.75rem);
+  --step-4:  clamp(2.25rem, 1.6rem + 3.2vw, 3.75rem);
+  --step-5:  clamp(2.5rem, 1rem + 8vw, 6rem); /* hero display */
+
+  --leading-tight: 1.1;   /* display headings */
+  --leading-snug: 1.3;    /* subheads, short lines */
+  --leading-normal: 1.6;  /* body copy */
+
+  --tracking-tight: -0.02em;  /* large display sizes */
+  --tracking-normal: 0;
+  --tracking-wide: 0.08em;    /* small caps / eyebrows */
+
+  /* ---------------------------------------------------------------
+     Spacing — generous, consistent rhythm. This is an editorial
+     site: prefer whitespace over density.
+  --------------------------------------------------------------- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 1rem;
+  --space-4: 1.5rem;
+  --space-5: 2.5rem;
+  --space-6: 4rem;
+  --space-7: 6rem;
+  --space-8: 9rem;
+
+  /* ---------------------------------------------------------------
+     Layout
+  --------------------------------------------------------------- */
+  --content-max: 68ch;      /* prose measure */
+  --content-pad: var(--space-4); /* min side gutter on narrow viewports */
+  --radius: 3px;            /* restrained — this is not a rounded-card UI */
+
+  /* ---------------------------------------------------------------
+     Motion — slow, heavy, buttery. Nothing snappy.
+  --------------------------------------------------------------- */
+  --ease-weighty: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+
+  --duration-fast: 0.6s;
+  --duration-base: 0.9s;
+  --duration-slow: 1.2s;
+
+  /* Looping ambient motion (idle-state breathing, not scroll-driven)
+     lives on its own, much longer timescale — read by hero.js so the
+     JS-side GSAP loop stays governed by the same source of truth. */
+  --duration-ambient: 4s;       /* jet pulse */
+  --duration-ambient-slow: 10s; /* disk / haze idle drift */
+  --ease-ambient: cubic-bezier(0.45, 0, 0.55, 1); /* sine-like, for loops */
+
+  /* ---------------------------------------------------------------
+     Cover geometry — the published Nature cover's trim size, used to
+     size the hero's convergence frame at true aspect ratio.
+  --------------------------------------------------------------- */
+  --cover-ratio-w: 880;
+  --cover-ratio-h: 1168;
+
+  /* Warm-black scrim for text legibility over the artwork. */
+  --scrim: rgba(6, 4, 3, 0.55);
+}

@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>data.js — smoke test</title>
+<style>
+  body { background: #0a0706; color: #ece6df; font: 14px/1.5 ui-monospace, monospace; padding: 2rem; }
+  .pass { color: #8fbf8f; }
+  .fail { color: #d98c8c; }
+  h1 { font-size: 1rem; font-weight: 600; margin: 1.5rem 0 0.5rem; }
+  h1:first-child { margin-top: 0; }
+</style>
+</head>
+<body>
+<div id="log"></div>
+
+<script type="module">
+  import { loadChirpGrid } from './data.js';
+
+  const logEl = document.getElementById('log');
+  let failures = 0;
+
+  function line(text, cls) {
+    const div = document.createElement('div');
+    if (cls) div.className = cls;
+    div.textContent = text;
+    logEl.appendChild(div);
+    console.log(text);
+  }
+  function heading(text) {
+    const h = document.createElement('h1');
+    h.textContent = text;
+    logEl.appendChild(h);
+    console.log('\n=== ' + text + ' ===');
+  }
+  function check(label, condition, detail = '') {
+    const mark = condition ? 'PASS' : 'FAIL';
+    if (!condition) failures++;
+    line(`[${mark}] ${label}${detail ? `  (${detail})` : ''}`, condition ? 'pass' : 'fail');
+  }
+
+  async function main() {
+    heading('grid dimensions');
+    const grid = await loadChirpGrid();
+
+    line(`n_B=${grid.grid.n_B}  n_P=${grid.grid.n_P}`);
+    line(`B_range=${JSON.stringify(grid.grid.B_range)} ${grid.grid.B_unit}`);
+    line(`P_spin_range=${JSON.stringify(grid.grid.P_spin_range)} ${grid.grid.P_spin_unit}`);
+    line(`bAxis=${JSON.stringify(grid.grid.bAxis)}`);
+    line(`pAxis=${JSON.stringify(grid.grid.pAxis)}`);
+    line(`modelTime: ${grid.modelTime.length} samples (${grid.modelTime[0]}..${grid.modelTime.at(-1)})`);
+    line(`observed.time: ${grid.observed.time.length} samples (${grid.observed.time[0]}..${grid.observed.time.at(-1)})`);
+
+    check('grid has n_B * n_P nodes', grid.nodeTable.length === grid.grid.n_B
+      && grid.nodeTable.every((row) => row.length === grid.grid.n_P));
+    check('modelTime and observed.time have different lengths (256 vs 124)',
+      grid.modelTime.length !== grid.observed.time.length,
+      `${grid.modelTime.length} vs ${grid.observed.time.length}`);
+
+    heading('best-fit node');
+    const best = grid.nearestNode(grid.bestFit.B, grid.bestFit.P_spin);
+    line(`best_fit_magnetar B=${grid.bestFit.B} P_spin=${grid.bestFit.P_spin}`);
+    line(`nearest grid node: B=${best.B} P_spin=${best.P_spin} chi2=${best.chi2}`);
+    check('best-fit nearest node has a finite chi2', Number.isFinite(best.chi2));
+
+    heading('bilinear interpolation');
+    // Deliberately off-node on both axes (grid.bAxis/pAxis are
+    // [0.1, 2.55, 5] / [1, 8, 15]) so this actually blends all four
+    // surrounding corners instead of landing exactly on one.
+    const qB = 1.3;
+    const qP = 5;
+    const interp = grid.bilinearModel(qB, qP);
+    line(`query B=${qB} P_spin=${qP} (off-node on both axes)`);
+    line(`ok=${interp.ok}  degraded=${interp.degraded}  chi2=${interp.chi2?.toFixed(3)}`);
+    line(`model[0:5]=${interp.model?.slice(0, 5).map((v) => v.toFixed(4))}`);
+    check('interpolation succeeded', interp.ok === true);
+
+    const iB0 = grid.grid.bAxis.findIndex((b) => b > qB) - 1;
+    const iP0 = grid.grid.pAxis.findIndex((p) => p > qP) - 1;
+    const corners = [
+      grid.nodeAt(iB0, iP0), grid.nodeAt(iB0 + 1, iP0),
+      grid.nodeAt(iB0, iP0 + 1), grid.nodeAt(iB0 + 1, iP0 + 1),
+    ];
+    const cornerChi2 = corners.map((c) => c.chi2);
+    const [chi2Lo, chi2Hi] = [Math.min(...cornerChi2), Math.max(...cornerChi2)];
+    line(`surrounding corner chi2 values: ${cornerChi2.join(', ')}`);
+    check('interpolated chi2 falls within the range of its 4 corner nodes',
+      interp.chi2 >= chi2Lo - 1e-9 && interp.chi2 <= chi2Hi + 1e-9,
+      `${interp.chi2?.toFixed(3)} in [${chi2Lo}, ${chi2Hi}]`);
+
+    const sampleIdx = 130;
+    const cornerVals = corners.map((c) => c.model[sampleIdx]);
+    const [vLo, vHi] = [Math.min(...cornerVals), Math.max(...cornerVals)];
+    check(`interpolated model[${sampleIdx}] falls within the range of its 4 corner nodes`,
+      interp.model[sampleIdx] >= vLo - 1e-9 && interp.model[sampleIdx] <= vHi + 1e-9,
+      `${interp.model[sampleIdx].toFixed(4)} in [${vLo.toFixed(4)}, ${vHi.toFixed(4)}]`);
+
+    check('interpolated model has one sample per modelTime point',
+      interp.model.length === grid.modelTime.length);
+    check('interpolated model is not degenerate (has non-zero signal)',
+      interp.model.some((v) => v !== 0));
+
+    heading('node health');
+    const flat = grid.nodeTable.flat();
+    const failedCount = flat.filter((n) => n.failed).length;
+    line(`${failedCount} of ${flat.length} nodes flagged as failed (all-zero/null model)`);
+    check('failed-node detection ran without throwing', Number.isInteger(failedCount));
+
+    heading('result');
+    line(failures === 0 ? 'All checks passed.' : `${failures} check(s) FAILED.`, failures === 0 ? 'pass' : 'fail');
+    document.title = failures === 0 ? 'data.js test — PASS' : 'data.js test — FAIL';
+  }
+
+  main().catch((err) => {
+    line('Test crashed: ' + err.message, 'fail');
+    document.title = 'data.js test — CRASH';
+    console.error(err);
+  });
+</script>
+</body>
+</html>

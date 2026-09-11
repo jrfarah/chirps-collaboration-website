@@ -1,0 +1,91 @@
+/*
+  Base layer: reset + element defaults. Every value here is a token
+  from tokens.css — no literals. Component/section styles come later
+  in their own files and follow the same rule.
+*/
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-weight: var(--weight-regular);
+  font-size: var(--step-0);
+  line-height: var(--leading-normal);
+  font-variant-numeric: var(--numeric-variant);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+img,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration-color: var(--line-raised);
+  text-underline-offset: 0.15em;
+  transition: color var(--duration-fast) var(--ease-weighty),
+              text-decoration-color var(--duration-fast) var(--ease-weighty);
+}
+
+a:hover,
+a:focus-visible {
+  color: var(--accent);
+  text-decoration-color: currentColor;
+}
+
+::selection {
+  background: var(--accent-warm);
+  color: var(--bg);
+}
+
+/* Centered prose column. Sections that need to break out of the
+   measure (hero, interactive plot) opt into .full-bleed instead. */
+.content {
+  max-width: var(--content-max);
+  margin-inline: auto;
+  padding-inline: var(--content-pad);
+}
+
+.full-bleed {
+  width: 100%;
+  max-width: none;
+}
+
+/* Smoke test only — remove once real sections land. */
+.smoke-test {
+  padding-block: var(--space-8);
+  font-size: var(--step-1);
+  font-weight: var(--weight-light);
+  color: var(--text-dim);
+}
+
+.smoke-test .accent {
+  color: var(--accent);
+  font-weight: var(--weight-medium);
+}
