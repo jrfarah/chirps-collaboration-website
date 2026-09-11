@@ -146,6 +146,309 @@
 }
 
 /* ---------------------------------------------------------------
+   Section 2.5 — "Measure a magnetar", an interactive residual-fit
+   figure. Populated/driven at runtime by js/measure.js (data/
+   chirp_grid.json) — the canvas and slider values below start empty;
+   the whole block stays [hidden] until the data has loaded and the
+   first frame is ready, so there's never a flash of an inert slider
+   sitting at 0. Same hairline-topped, boxless language as the goal/
+   roadmap/coverage blocks — the plot is drawn straight onto the page's
+   own background, no panel behind it, no library chrome.
+------------------------------------------------------------------ */
+.section-measure {
+  padding-block: var(--space-8);
+}
+
+.measure-intro {
+  max-width: 60ch;
+  font-size: var(--step-1);
+  font-weight: var(--weight-light);
+  line-height: var(--leading-normal);
+  color: var(--text-dim);
+  margin-bottom: var(--space-6);
+}
+
+.measure {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.measure-plot {
+  display: flex;
+  gap: var(--space-3);
+  border-top: 1px solid var(--line);
+  padding-top: var(--space-5);
+}
+
+.measure-plot__yaxis {
+  flex-shrink: 0;
+  align-self: center;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: var(--step--1);
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.measure-plot__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.measure-plot__canvas-wrap {
+  position: relative;
+  width: 100%;
+  /* Shorter than the old 16/9 — the y domain is now a fixed [-1, 1]
+     (js/measure.js), so the interesting part of the curve no longer
+     needs as much height to stay legible. */
+  aspect-ratio: 5 / 2;
+}
+
+.measure-plot__canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.measure-plot__xaxis {
+  margin-top: var(--space-2);
+  text-align: center;
+  font-size: var(--step--1);
+  color: var(--text-faint);
+}
+
+.measure-controls {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr) minmax(14rem, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.measure-slider {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.measure-slider__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.measure-slider__label {
+  font-size: var(--step-0);
+  font-weight: var(--weight-medium);
+  color: var(--text);
+}
+
+.measure-slider__value {
+  font-size: var(--step-0);
+  font-weight: var(--weight-medium);
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.measure-slider__unit {
+  margin-left: 0.3em;
+  font-size: var(--step--1);
+  font-weight: var(--weight-regular);
+  color: var(--text-dim);
+}
+
+.measure-slider__guide {
+  font-size: var(--step--1);
+  font-weight: var(--weight-light);
+  color: var(--text-dim);
+}
+
+/* Custom range input — thin track, small accent thumb, no native
+   browser chrome. --measure-range-fill (set in js/measure.js on every
+   update) drives the webkit "filled up to the thumb" look; Firefox
+   gets the same effect for free from ::-moz-range-progress. */
+.measure-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 1.5rem;
+  background: transparent;
+  cursor: pointer;
+  --measure-range-fill: 0%;
+}
+
+.measure-range::-webkit-slider-runnable-track {
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--accent) var(--measure-range-fill),
+    var(--line-raised) var(--measure-range-fill)
+  );
+}
+
+.measure-range::-moz-range-track {
+  height: 2px;
+  border-radius: 999px;
+  background: var(--line-raised);
+}
+
+.measure-range::-moz-range-progress {
+  height: 2px;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.measure-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  margin-top: -5px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--bg);
+  transition: transform var(--duration-fast) var(--ease-weighty);
+}
+
+.measure-range::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: none;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--bg);
+  transition: transform var(--duration-fast) var(--ease-weighty);
+}
+
+.measure-range:hover::-webkit-slider-thumb,
+.measure-range:focus-visible::-webkit-slider-thumb {
+  transform: scale(1.2);
+}
+
+.measure-range:hover::-moz-range-thumb,
+.measure-range:focus-visible::-moz-range-thumb {
+  transform: scale(1.2);
+}
+
+.measure-range:focus-visible {
+  outline: none;
+}
+
+.measure-range:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--line-raised);
+}
+
+.measure-range:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--line-raised);
+}
+
+.measure-fit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.measure-fit__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.measure-fit__label {
+  font-size: var(--step--1);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.measure-fit__value {
+  font-size: var(--step-2);
+  font-weight: var(--weight-medium);
+  color: var(--text);
+}
+
+.measure-fit__bar {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--line-raised);
+  overflow: hidden;
+}
+
+.measure-fit__bar-fill {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  opacity: 0.45;
+  /* Deliberately near-instant on width — this updates on every slider
+     input event, and a slower transition here would read as the bar
+     lagging behind the thumb. opacity keeps a touch of the site's
+     usual --duration-fast softness since it changes less abruptly. */
+  transition: width 0.08s linear, opacity var(--duration-fast) var(--ease-weighty);
+}
+
+.measure.is-near-best .measure-fit__bar-fill {
+  box-shadow: 0 0 10px 0 var(--accent);
+}
+
+.measure-fit__hint {
+  font-size: var(--step--1);
+  font-weight: var(--weight-light);
+  color: var(--text-faint);
+}
+
+.measure-snap {
+  align-self: flex-start;
+  margin-top: var(--space-1);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--line-raised);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--step--1);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-weighty),
+              color var(--duration-fast) var(--ease-weighty),
+              background var(--duration-fast) var(--ease-weighty);
+}
+
+.measure-snap:hover,
+.measure-snap:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--bg-raised);
+}
+
+@media (max-width: 700px) {
+  .measure-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .measure-plot {
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .measure-plot__yaxis {
+    writing-mode: horizontal-tb;
+    transform: none;
+    align-self: flex-start;
+  }
+
+  .measure-plot__canvas-wrap {
+    aspect-ratio: 3 / 2;
+  }
+}
+
+/* ---------------------------------------------------------------
    Section 3 — roadmap, as a horizontal timeline — deliberately NOT
    the Goals treatment (grid + hairline rules): three stations strung
    along one axis line, left to right, each a node + a small tag

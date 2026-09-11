@@ -22,8 +22,9 @@ from pathlib import Path
 
 import numpy as np
 
-ROOT = Path(__file__).resolve().parents[1]
-MOSFIT_DIR = ROOT / 'data' / 'mosfit'
+WEBSITE_ROOT = Path(__file__).resolve().parents[1]
+PIPELINE_ROOT = WEBSITE_ROOT.parent / 'chirps_package' / 'chirps'
+MOSFIT_DIR = PIPELINE_ROOT / 'data' / 'mosfit'
 EVENT_PATH = MOSFIT_DIR / 'SN2024afav_full.json'
 RUN_DIR = MOSFIT_DIR / 'runs' / 'full'
 JOINT_H5 = RUN_DIR / 'joint_nominal.h5'
@@ -330,12 +331,16 @@ def build_artifact(n_B: int, n_P: int, out_path: Path):
 
     nodes = []
     walls = []
+    n_fail = 0
+    verbose_nodes = (n_B * n_P) <= 16
     t_grid = time.perf_counter()
-    for B in B_axis:
+    for i_B, B in enumerate(B_axis):
+        row_chi2 = []
         for P in P_axis:
             node = evaluate_node(
                 lp, B, P, chirp, disk_fixed, t_obs, t_plot, obs, err)
             if node is None:
+                n_fail += 1
                 print(f'  FAIL B={B:.4f} P={P:.4f}')
                 nodes.append({
                     'B': round(float(B), N_PREC_B),
@@ -345,8 +350,10 @@ def build_artifact(n_B: int, n_P: int, out_path: Path):
                 })
                 continue
             walls.append(node['wall_s'])
-            print(f'  B={B:7.4f}  P_spin={P:7.4f}  chi2={node["chi2"]:10.3f}  '
-                  f'{node["wall_s"]*1e3:6.1f} ms')
+            row_chi2.append(node['chi2'])
+            if verbose_nodes:
+                print(f'  B={B:7.4f}  P_spin={P:7.4f}  chi2={node["chi2"]:10.3f}  '
+                      f'{node["wall_s"]*1e3:6.1f} ms')
             nodes.append({
                 'B': round(float(B), N_PREC_B),
                 'P_spin': round(float(P), N_PREC_P),
@@ -354,7 +361,15 @@ def build_artifact(n_B: int, n_P: int, out_path: Path):
                          else round(float(node['chi2']), N_PREC_CHI2)),
                 'model': round_list(node['model'], N_PREC_MAG),
             })
+        if not verbose_nodes:
+            finite = [c for c in row_chi2 if np.isfinite(c)]
+            chi2_bit = (f'chi2 {min(finite):.1f}–{max(finite):.1f}'
+                        if finite else 'no finite chi2')
+            print(f'  row {i_B+1:3d}/{n_B}  B={B:7.4f}  {chi2_bit}  '
+                  f'elapsed {time.perf_counter() - t_grid:.1f}s',
+                  flush=True)
     grid_wall = time.perf_counter() - t_grid
+    print(f'  done: {len(nodes)} nodes, {n_fail} failures, {grid_wall:.1f}s')
 
     artifact = {
         'schema': 'chirps.sn2024afav.residual_grid.v1',
@@ -364,7 +379,7 @@ def build_artifact(n_B: int, n_P: int, out_path: Path):
             'observed residual is magnetar_model - data; each node.model is '
             'the predicted residual -dm, so a correct chirp overlays the data'
         ),
-        'fit_source': str(JOINT_H5.relative_to(ROOT)),
+        'fit_source': str(JOINT_H5.relative_to(PIPELINE_ROOT)),
         'nuisances': {
             'A0': round(nu['A0'], 6),
             't_peak': round(nu['t_peak'], 6),

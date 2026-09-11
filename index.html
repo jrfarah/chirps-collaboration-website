@@ -31,6 +31,7 @@
       <div class="site-nav__links">
         <a href="#story">Story</a>
         <a href="#goals">Goals</a>
+        <a href="#measure">Measure</a>
         <a href="#roadmap">Roadmap</a>
         <a href="#team">Team</a>
         <a href="#coverage">Coverage</a>
@@ -225,6 +226,62 @@
             </div>
           </li>
         </ol>
+      </div>
+    </section>
+
+    <section id="measure" class="section-measure">
+      <div class="content content--wide">
+        <p class="section-lead">Measure a magnetar</p>
+        <p class="measure-intro">The chirp is set by two numbers: how fast the newborn magnetar spins, and how strong its magnetic field is. Drag them, and watch the model try to match the real light curve of SN 2024afav.</p>
+
+        <!-- Populated at load from data/chirp_grid.json (2500 nodes,
+             50x50 over B x P_spin) — see js/measure.js, which owns all
+             the interpolation/drawing; this markup is just the frame
+             it renders into. Starts on a deliberately off-fit position
+             so there's something to solve before "Snap to best fit"
+             delivers the payoff. -->
+        <div class="measure" data-measure hidden>
+          <div class="measure-plot">
+            <div class="measure-plot__yaxis" aria-hidden="true">Residual (mag)</div>
+            <div class="measure-plot__main">
+              <div class="measure-plot__canvas-wrap" data-measure-canvas-wrap>
+                <canvas class="measure-plot__canvas" data-measure-canvas
+                        aria-label="Residual light curve of SN 2024afav: observed data points with error bars, and the model curve set by the sliders below"></canvas>
+              </div>
+              <p class="measure-plot__xaxis" aria-hidden="true">Time (days)</p>
+            </div>
+          </div>
+
+          <div class="measure-controls">
+            <div class="measure-slider">
+              <div class="measure-slider__head">
+                <label class="measure-slider__label" for="measure-input-p">Spin period (P)</label>
+                <span class="measure-slider__value"><span data-measure-value="P">—</span><span class="measure-slider__unit">ms</span></span>
+              </div>
+              <input class="measure-range" type="range" id="measure-input-p" data-measure-input="P" />
+              <p class="measure-slider__guide">How fast the newborn magnetar rotates.</p>
+            </div>
+
+            <div class="measure-slider">
+              <div class="measure-slider__head">
+                <label class="measure-slider__label" for="measure-input-b">Magnetic field (B)</label>
+                <span class="measure-slider__value"><span data-measure-value="B">—</span><span class="measure-slider__unit">×10¹⁴ G</span></span>
+              </div>
+              <input class="measure-range" type="range" id="measure-input-b" data-measure-input="B" />
+              <p class="measure-slider__guide">The strength of its magnetic field.</p>
+            </div>
+
+            <div class="measure-fit">
+              <div class="measure-fit__head">
+                <span class="measure-fit__label">χ²</span>
+                <span class="measure-fit__value" data-measure-chi2>—</span>
+              </div>
+              <div class="measure-fit__bar"><span class="measure-fit__bar-fill" data-measure-fit-bar></span></div>
+              <p class="measure-fit__hint">Goodness of fit — lower is better.</p>
+              <button class="measure-snap" type="button" data-measure-snap>Snap to best fit</button>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
