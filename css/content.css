@@ -265,6 +265,93 @@
 }
 
 /* ---------------------------------------------------------------
+   Section 3.5 — "Who we are" team grid. Populated at runtime from
+   data/people.json (js/team.js) — the grid below starts empty.
+   Deliberately flat: one uniform card per person, same size for the
+   founder as for everyone else — no featured/enlarged treatment.
+   Headshots are pre-cropped 4:5 portrait files (560x700), the same
+   ratio as --avatar-ratio (tokens.css) — masked into a true ellipse via
+   border-radius:50% on that non-square box, no clip-path needed.
+   object-fit:cover is still there as a safety net (a differently-
+   cropped photo added later without matching the 4:5 ratio would be
+   covered, not letterboxed), but since ratios already match, it maps
+   the source in 1:1 with no cropping on either axis — no black caps at
+   top/bottom, no shaved edges left/right.
+------------------------------------------------------------------ */
+.section-team {
+  padding-block: var(--space-8);
+}
+
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(calc(var(--avatar-w) + var(--space-4)), 1fr));
+  gap: var(--space-7) var(--space-4);
+}
+
+.person {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-3);
+}
+
+.person__photo {
+  width: var(--avatar-w);
+  aspect-ratio: var(--avatar-ratio);
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--bg-raised);
+  transition: transform var(--duration-fast) var(--ease-weighty),
+              box-shadow var(--duration-fast) var(--ease-weighty);
+}
+
+.person__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Restrained hover — a hair of lift and a soft glow, nothing flashy. */
+.person:hover .person__photo {
+  transform: scale(1.03);
+  box-shadow: 0 0 0 1px var(--line-raised), 0 var(--space-2) var(--space-5) -1.5rem var(--accent);
+}
+
+.person__info {
+  max-width: calc(var(--avatar-w) * 1.6);
+}
+
+.person__name {
+  font-size: var(--step-0);
+  font-weight: var(--weight-medium);
+  color: var(--text);
+}
+
+.person__contact {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-faint);
+  transform: translateY(0.1em);
+  transition: color var(--duration-fast) var(--ease-weighty);
+}
+
+.person__contact:hover,
+.person__contact:focus-visible {
+  color: var(--accent);
+}
+
+.person__role {
+  margin-top: var(--space-1);
+  font-size: var(--step--1);
+  font-weight: var(--weight-light);
+  line-height: var(--leading-snug);
+  color: var(--text-dim);
+}
+
+/* ---------------------------------------------------------------
    Section 4 — coverage/press gallery. Populated at runtime from
    data/press.json (js/coverage.js) — the grid below starts empty.
    Cards are hairline-topped, not boxed panels (same language as

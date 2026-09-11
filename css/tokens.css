@@ -110,6 +110,15 @@
   --cover-ratio-w: 880;
   --cover-ratio-h: 1168;
 
+  /* ---------------------------------------------------------------
+     Team grid — one fluid width for every headshot oval (team.css
+     rule reads this once; every person gets it, no per-person
+     override, so there is never a hierarchy of sizes). Ratio is
+     4/5 — portrait, not a circle, restrained rather than tall/narrow.
+  --------------------------------------------------------------- */
+  --avatar-w: clamp(6.25rem, 5.4rem + 3.5vw, 8rem);
+  --avatar-ratio: 4 / 5;
+
   /* Warm-black scrim for text legibility over the artwork. */
   --scrim: rgba(6, 4, 3, 0.55);
 }

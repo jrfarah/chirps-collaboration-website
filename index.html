@@ -32,6 +32,7 @@
         <a href="#story">Story</a>
         <a href="#goals">Goals</a>
         <a href="#roadmap">Roadmap</a>
+        <a href="#team">Team</a>
         <a href="#coverage">Coverage</a>
       </div>
     </div>
@@ -235,7 +236,7 @@
             <span class="roadmap-station__node" aria-hidden="true"></span>
             <span class="roadmap-station__index">01</span>
             <h3 class="roadmap-station__title">Find the population.</h3>
-            <p class="roadmap-station__body">Build detection tools to catch chirping superluminous supernovae in Rubin/LSST — turning one object into a sample.</p>
+            <p class="roadmap-station__body">Build detection tools to catch chirping superluminous supernovae in Rubin/LSST, turning one candidate object into a sample.</p>
           </li>
           <li class="roadmap-station">
             <span class="roadmap-station__node" aria-hidden="true"></span>
@@ -247,9 +248,23 @@
             <span class="roadmap-station__node" aria-hidden="true"></span>
             <span class="roadmap-station__index">03</span>
             <h3 class="roadmap-station__title">Weigh a newborn neutron star.</h3>
-            <p class="roadmap-station__body">Use the chirp as a clock to constrain the spin, magnetic field, and interior of a neutron star days after its birth — connecting supernova observations to the physics of dense matter.</p>
+            <p class="roadmap-station__body">Use the chirp as a clock to constrain the spin, magnetic field, and interior of a neutron star days after its birth, connecting supernova observations to the physics of dense matter.</p>
           </li>
         </ol>
+      </div>
+    </section>
+
+    <section id="team" class="section-team">
+      <div class="content content--wide">
+        <p class="section-lead">Who we are</p>
+        <!-- Populated at load from data/people.json — see js/team.js.
+             Uniform grid, JSON order preserved: headshot masked into a
+             portrait oval, name, title/affiliation below. No entry is
+             enlarged or set apart — the founder (first in the array)
+             gets the same box as everyone else, distinguished only by
+             his title text and, since he's the only one with an
+             `email` field, a small mailto icon next to his name. -->
+        <div class="team-grid" data-team-grid></div>
       </div>
     </section>
 
@@ -267,7 +282,7 @@
 
   <footer class="site-footer">
     <div class="content site-footer__inner">
-      <p class="site-footer__text">CHIRP — SN 2024afav</p>
+      <p class="site-footer__text">Read more about the first chirping supernova, SN 2024afav.</p>
       <p class="site-footer__text">
         <a href="https://www.nature.com/nature/volumes/651/issues/8105" target="_blank" rel="noopener">
           Nature, vol.&nbsp;651 — 12 March 2026. Cover story.

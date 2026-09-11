@@ -1,0 +1,87 @@
+[
+  {
+    "name": "Joseph Farah",
+    "title": "Founder & Coordinator",
+    "affiliation": "UC Berkeley",
+    "photo": "01_joseph_farah.jpg",
+    "email": "josephfarah@berkeley.edu"
+  },
+  {
+    "name": "Logan Prust",
+    "title": "",
+    "affiliation": "Flatiron Institute",
+    "photo": "02_logan_prust.jpg"
+  },
+  {
+    "name": "Prof. Dan Kasen",
+    "title": "Professor",
+    "affiliation": "UC Berkeley",
+    "photo": "03_dan_kasen.jpg"
+  },
+  {
+    "name": "Prof. Alex Filippenko",
+    "title": "Professor",
+    "affiliation": "UC Berkeley",
+    "photo": "04_alex_filippenko.jpg"
+  },
+  {
+    "name": "Prof. Raf Margutti",
+    "title": "Professor",
+    "affiliation": "UC Berkeley",
+    "photo": "05_raf_margutti.jpg"
+  },
+  {
+    "name": "Prof. Andy Howell",
+    "title": "Professor",
+    "affiliation": "UC Santa Barbara",
+    "photo": "06_andy_howell.jpg"
+  },
+  {
+    "name": "Curtis McCully",
+    "title": "",
+    "affiliation": "Las Cumbres Observatory",
+    "photo": "13_curtis_mccully.jpg"
+  },
+  {
+    "name": "Eyouel Abate",
+    "title": "Student",
+    "affiliation": "UC Berkeley",
+    "photo": "07_eyouel_abate.jpg"
+  },
+  {
+    "name": "Austin Mei",
+    "title": "Student",
+    "affiliation": "Berkeley",
+    "photo": "08_austin_mei.jpg"
+  },
+  {
+    "name": "Prof. Hang Yu",
+    "title": "Professor",
+    "affiliation": "Michigan State University",
+    "photo": "09_hang_yu.jpg"
+  },
+  {
+    "name": "Chengcheng Xin",
+    "title": "",
+    "affiliation": "Black Hole Initiative",
+    "photo": "10_chengcheng_xin.jpg"
+  },
+  {
+    "name": "Dominic Chang",
+    "title": "",
+    "affiliation": "Niels Bohr Institute",
+    "photo": "11_dominic_chang.jpg"
+  },
+  {
+    "name": "Delilah Gates",
+    "title": "",
+    "affiliation": "Black Hole Initiative",
+    "photo": "12_delilah_gates.jpg"
+  },
+  {
+    "name": "Jonathan Delgado",
+    "title": "Graduate Student",
+    "affiliation": "UC Irvine",
+    "photo": "14_jonathan_delgado.jpg"
+  }
+]
