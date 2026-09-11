@@ -2,11 +2,12 @@
  * Hero — pinned, monotonic scroll sequence, rebuilt clean.
  *
  * .hero-engine — disk + magnetar + all four jet pieces + the cover
- * text overlay, ONE rigid group ("the object"). Its CSS size
- * (hero.css) is deliberately the exact size at which scale:1 makes
- * the text overlay fill --frame-w — i.e. its *resting* scale is Beat
- * 3's registered, frame-filling state. Beat 1's "small, contained,
- * ~35% of viewport width" look is a scale-up applied on top of that
+ * text overlay + cover_nature.png, ONE rigid group ("the object"). Its
+ * CSS size (hero.css) is deliberately the exact size at which scale:1
+ * makes the text overlay (and cover_nature.png, sharing its box — see
+ * below) fill --frame-w — i.e. its *resting* scale is Beat 3's
+ * registered, frame-filling state. Beat 1's "small, contained, ~35%
+ * of viewport width" look is a scale-up applied on top of that
  * (computed once, see computeEngineStartScale). That scale-up holds
  * fixed through all of Beat 2 — the object's size never changes while
  * the dust flies — and only eases down to 1 during the Beat 3
@@ -15,11 +16,25 @@
  * motion, never a reversal. Hero-scoped only: this does NOT persist
  * past the hero (see .bg-fixed below for what does).
  *
- * Because every engine child (jets, disk, magnetar, overlay) is
- * positioned in the SAME percentage system relative to one shared
- * parallax transform on .hero-engine itself — never one transform
- * per child — nothing inside it can ever drift apart from anything
- * else inside it, at any scroll position, by construction.
+ * Engine's own position is a plain, unanimated true-center settle
+ * (xPercent/yPercent -50/-50, set once, never tweened) — no residual
+ * "weak drift" on top of it. There used to be one (a few percent,
+ * meant to read as "the calm anchor the dust drifts past"); it's gone
+ * now because it was the ROOT CAUSE of two separate bugs fought over
+ * several passes: it put engine's children a few percent off the
+ * frame bars' own true-centered window (a gap exposed once the bars
+ * faded), and, because cover_nature.png used to live outside engine
+ * and had to choose between matching THAT offset (for the crossfade)
+ * or true center (for the frame), it could never satisfy both at
+ * once. True center for everyone, always, removes the conflict
+ * instead of continuing to arbitrate it.
+ *
+ * Because every engine child (jets, disk, magnetar, overlay,
+ * cover_nature.png) is positioned in the SAME percentage system
+ * relative to one shared parallax transform on .hero-engine itself —
+ * never one transform per child — nothing inside it can ever drift
+ * apart from anything else inside it, at any scroll position, by
+ * construction.
  *
  * .bg-fixed — bg_environment + all four corner dust/haze layers, one
  * unbroken scene. Unlike the engine, this is NOT hero-scoped: it's a
@@ -35,46 +50,51 @@
  * Beat 3 has three parts, all monotonic, none reversing another:
  *   1. Register-and-reveal — the text overlay (cover_text_overlay.png,
  *      the real Nature masthead/cover text with the artwork cut out)
- *      fades and settles in over the still-live engine, the four --bg
- *      bars close to the cover's trim size, and natureCover (still
- *      fully transparent) settles into the frame's TRUE center — see
- *      part 2 for why that has to happen here, before any opacity
- *      moves. No flat image is involved yet — the live disk showing
- *      through the overlay's negative space *is* the cover here.
+ *      fades and settles in over the still-live engine, and the four
+ *      --bg bars close to the cover's trim size. No flat image is
+ *      involved yet — the live disk showing through the overlay's
+ *      negative space *is* the cover here. Once overlay reaches
+ *      opacity 1, it is NEVER faded again — see part 2.
  *   2. Tail-end crossfade — only once part 1 is fully assembled, the
- *      live scene dissolves into cover_nature.png (the same 880×1168
- *      asset the overlay was cut from, so it shares its exact
- *      registration), freezing the living scene into the printed
- *      artifact, for a pixel-clean final frame. natureCover is ALREADY
- *      sitting exactly in the frame window by this point (settled in
- *      part 1, while invisible) — position and opacity are deliberately
- *      never animated in the same window for this element, so there's
- *      no gap between image and frame to expose at any intermediate
- *      opacity, only at the two extremes. (An earlier version settled
- *      position only in part 3, below, or concurrently with the fade —
- *      both left a real, visible gap for the fade's own duration;
- *      ordering position-then-opacity, not just timing them to roughly
- *      coincide, is what actually fixes that.)
+ *      live artwork (disk, magnetar, both jets, both jet-glows — NOT
+ *      overlay, NOT the engine group itself) fades away while
+ *      cover_nature.png (the same 880×1168 asset the overlay was cut
+ *      from) fades in, freezing the living scene into the printed
+ *      artifact for a pixel-clean final frame.
  *
- *      Within this dissolve, overlay (the masthead text riding inside
- *      engine) is NOT simply carried down by engine's own fade — it
- *      gets pulled out and given its own faster fade that finishes
- *      first, so it's confirmed fully gone before natureCover (a
- *      second, independently-positioned copy of the same text) starts
- *      to appear. The two never overlap in time, which is what actually
- *      prevents doubled/ghosted text — engine and natureCover sit at
- *      slightly different positions (see part 1's note above), so a
- *      simultaneous cross-dissolve between their two text copies reads
- *      as doubled text for the fade's entire duration, no matter how
- *      either one is repositioned; disjoint timing, not registration,
- *      is the actual fix.
+ *      overlay and cover_nature.png are two renderings of the exact
+ *      same canvas — same crop, same pixel coordinates for the
+ *      masthead text — and, critically, they are SIBLINGS inside
+ *      .hero-engine sharing the identical .hero-layer--cover-box CSS
+ *      rule (hero.css): same top/left/width/height/object-fit,
+ *      inheriting the same engine transform. Not "positioned to
+ *      match" by separately-computed offsets (that was the old,
+ *      fragile approach, and it drifted); their boxes are identical
+ *      by construction — verify with getBoundingClientRect() on both
+ *      and they report the same numbers to the pixel.
+ *
+ *      Because their text sits at identical pixels, overlay is left
+ *      at full opacity through this entire fade rather than also
+ *      fading out — cover_nature.png simply fades in on top of it.
+ *      Overlay's text is never hidden by cover_nature.png's identical
+ *      text underneath — same pixels, so nothing to hide — and the
+ *      masthead reads as continuously present and perfectly still
+ *      the whole time; only the artwork underneath (and around it,
+ *      via the fading liveArt group) resolves from live scene to
+ *      flat print. (An earlier version tried cross-dissolving overlay
+ *      and cover_nature.png's opacities against each other, sequentially
+ *      or simultaneously, while the two lived in different boxes —
+ *      every version of that either ghosted the text against its own
+ *      slightly-offset copy or dipped to zero text uncomfortably
+ *      between them. Sharing one box removes the need for either.)
  *   3. Tail-end exit — once the resolve has fully held, the four bars
  *      and their corner-rounding patches (only ever an assembly
  *      effect for reaching the resolve) fade away too, so what's left
- *      scrolling off — just the small, cover-sized nature image — has
- *      no opaque margins around it. It reveals the SAME continuous
- *      .bg-fixed scene the whole rest of the page sits on, instead of
- *      a black-bordered box cutting to it.
+ *      scrolling off — just the small, cover-sized nature image, with
+ *      overlay's identical (now redundant, harmless) text sitting
+ *      exactly beneath it — has no opaque margins around it. It
+ *      reveals the SAME continuous .bg-fixed scene the whole rest of
+ *      the page sits on, instead of a black-bordered box cutting to it.
  */
 
 // --- ANIMATED PROPERTIES (scroll-driven timeline only — the ambient
@@ -90,9 +110,6 @@
 //   copy opacity                 1 → 0
 //   copy yPercent                0 → -25   (lifts while fading)
 //   scrollcue opacity            1 → 0
-//   engine yPercent              base → base + drift  (weak, one sign,
-//                                          full scroll — Beat 2's only
-//                                          motion on the object)
 //   engine scale                 k1 → 1   (Beat 3 window only, one
 //                                          direction — see
 //                                          computeEngineStartScale;
@@ -100,7 +117,11 @@
 //                                          through all of Beat 2, so
 //                                          the object's SIZE is truly
 //                                          still while the dust flies)
-//   overlay opacity              0 → 1     (assembly window)
+//   overlay opacity              0 → 1     (assembly window — then
+//                                          held at 1 for the rest of
+//                                          the hero; see the Beat 3b
+//                                          note above for why it's
+//                                          never animated again)
 //   overlay scale                1.15 → 1  (assembly window)
 //   bar scaleX (left/right)      0 → 1     (assembly window)
 //   bar scaleY (top/bottom)      0 → 1     (assembly window)
@@ -108,12 +129,6 @@
 //                                          the window the bars leave)
 //   caption opacity              0 → 1     (assembly window)
 //   caption yPercent             4 → 0     (assembly window)
-//   nature-cover yPercent        -50+drift → -50  (assembly window,
-//                                          while still opacity 0 — see
-//                                          the Beat 3b comment below
-//                                          for why this has to settle
-//                                          BEFORE the fade, not during
-//                                          or after it)
 //   statement opacity (×3)       0 → 1 → 0 (Beat 2 only — the one
 //                                          deliberate exception to
 //                                          single-direction motion:
@@ -137,22 +152,14 @@
 //                                          through the hold and the
 //                                          fade-out, so there's no
 //                                          reverse motion)
-//   overlay opacity (2nd row)     1 → 0     (tail crossfade, first ~40%
-//                                          of the window only — pulled
-//                                          out of engine's own fade so
-//                                          the masthead text is
-//                                          confirmed gone before
-//                                          nature-cover's copy of it
-//                                          starts to appear; see the
-//                                          Beat 3b comment for why)
-//   engine opacity                1 → 0     (tail crossfade, full
-//                                          window — disk/jets/magnetar,
-//                                          nothing here has text to
-//                                          double against nature-cover)
-//   nature-cover opacity          0 → 1     (tail crossfade, LAST ~60%
-//                                          of the window only, starting
-//                                          after overlay's own row above
-//                                          has already reached 0)
+//   liveArt opacity (×6)          1 → 0     (tail crossfade — disk,
+//                                          magnetar, both jets, both
+//                                          jet-glows; the photographic
+//                                          content, not the text)
+//   nature-cover opacity          0 → 1     (tail crossfade — fades in
+//                                          on top of overlay, which
+//                                          stays at 1 throughout; see
+//                                          the Beat 3b note above)
 //   bar scaleX/scaleY             — no change; bars stay fully closed
 //   bar/corner opacity            1 → 0     (tail exit, AFTER the
 //                                          crossfade has fully held —
@@ -160,7 +167,10 @@
 //                                          and including this point,
 //                                          is untouched by this row)
 //
-// Nothing here is ever animated back toward an earlier value.
+// Nothing here is ever animated back toward an earlier value. engine's
+// own xPercent/yPercent is set once (true center) and never tweened at
+// all anymore — see the header comment above for why that's now a
+// plain constant rather than a "weak drift" row in this table.
 //
 // --- SCENE (buildSceneDrift, ScrollTrigger id "bg-scene") — entirely
 // separate timeline/trigger, spanning the whole page (top of hero to
@@ -205,10 +215,21 @@ export async function initHero() {
   const engine = hero.querySelector('[data-hero-engine]');
   const jetLower = hero.querySelector('[data-hero-jet-lower]');
   const jetUpper = hero.querySelector('[data-hero-jet-upper]');
+  const disk = hero.querySelector('[data-hero-disk]');
+  const magnetar = hero.querySelector('[data-hero-magnetar]');
   const jetGlow1 = hero.querySelector('[data-hero-jetglow-1]');
   const jetGlow2 = hero.querySelector('[data-hero-jetglow-2]');
   const overlay = hero.querySelector('[data-hero-overlay]');
   const natureCover = hero.querySelector('[data-hero-nature]');
+  // The live scene's photographic content — everything that needs to
+  // fade away for the tail crossfade EXCEPT the text (overlay, which
+  // stays at opacity 1 throughout — see the header comment) and
+  // cover_nature.png (which fades in separately). Deliberately a
+  // named group, not "engine" itself: engine's own opacity is never
+  // touched, precisely so overlay and cover_nature.png (both its
+  // children) are unaffected by this fade and stay under their own
+  // independent opacity control.
+  const liveArt = [jetLower, disk, magnetar, jetUpper, jetGlow1, jetGlow2];
   const copy = hero.querySelector('[data-hero-copy]');
   const scrollcue = hero.querySelector('[data-hero-scrollcue]');
   const caption = hero.querySelector('[data-hero-caption]');
@@ -249,11 +270,6 @@ export async function initHero() {
   const isMobile = window.matchMedia('(max-width: 700px)').matches;
   const parallaxScale = isMobile ? 0.6 : 1;
   const dyn = (base) => base * parallaxScale;
-
-  // Hero-only drift (engine). Unrelated to the scene below.
-  const DRIFT = {
-    engine: 3,
-  };
 
   // Scene drift — bg_environment + the four dust/haze layers, for the
   // FULL PAGE, top of hero to bottom of footer. One number per axis
@@ -358,15 +374,16 @@ export async function initHero() {
   function buildScrollSequence() {
     const k1 = computeEngineStartScale();
 
+    // True center, set once, never tweened — see the header comment
+    // for why engine no longer carries a "weak drift" offset.
     gsapLib.set(engine, { xPercent: -50, yPercent: -50, scale: k1 });
     gsapLib.set(overlay, { opacity: 0, scale: 1.15 });
-    // .hero-engine settles at yPercent -50 + dyn(DRIFT.engine), not
-    // dead-center — its constant "weak drift" offset never animates
-    // back to 0 (that would violate monotonicity). Pre-positioning
-    // natureCover to that same offset — rather than true center — is
-    // what makes it register with the live overlay it's crossfading
-    // over instead of jumping a few percent of the frame's height.
-    gsapLib.set(natureCover, { xPercent: -50, yPercent: -50 + dyn(DRIFT.engine), opacity: 0 });
+    // No xPercent/yPercent here at all: cover_nature.png is now a
+    // plain CSS-positioned sibling of overlay inside .hero-engine
+    // (.hero-layer--cover-box, hero.css), inheriting engine's
+    // transform for free. Opacity is the only thing this element
+    // ever needs from JS.
+    gsapLib.set(natureCover, { opacity: 0 });
     gsapLib.set([bars.left, bars.right], { scaleX: 0 });
     gsapLib.set([bars.top, bars.bottom], { scaleY: 0 });
     gsapLib.set(corners, { opacity: 0 });
@@ -380,11 +397,11 @@ export async function initHero() {
     tl.to(copy, { yPercent: -25, opacity: 0, duration: 0.15 }, 0);
     tl.to(scrollcue, { opacity: 0, duration: 0.08 }, 0);
 
-    // The object: weak drift only, across the whole scroll — its
-    // SIZE stays fixed through all of Beat 2 (no scale tween here),
+    // The object: perfectly still position-wise across the whole
+    // scroll (set once, above — no tween here at all) — its SIZE also
+    // stays fixed through all of Beat 2 (no scale tween here either),
     // which is what actually reads as "still" while the dust flies
     // (the dust itself is entirely handled by buildSceneDrift now).
-    tl.to(engine, { yPercent: -50 + dyn(DRIFT.engine), duration: 1 }, 0);
 
     // Beat 2 statements — three captions, one at a time, evenly spaced
     // between the title's exit (done by 0.15) and the assembly window
@@ -414,33 +431,8 @@ export async function initHero() {
     tl.to(corners, { opacity: 1, duration: 0.2 }, 0.8);
     tl.to(caption, { opacity: 1, yPercent: 0, duration: 0.1 }, 0.9);
 
-    // natureCover starts (gsapLib.set() above) pre-positioned a few
-    // percent off true-center, to match .hero-engine's own settled
-    // drift offset — needed because during Beat 3b's crossfade the
-    // live engine and the fading-in cover are visible together, and
-    // without this they'd sit at very slightly different heights and
-    // briefly double-image. But that offset also means natureCover's
-    // own top edge doesn't line up with the bars'/corners' TRUE-
-    // centered frame window — a thin gap, at every opacity in between,
-    // through which the persistent scene behind (.hero-pin carries no
-    // background of its own) shows past the image's edge: a dark band
-    // for the full duration of the fade, not just visible at some
-    // midpoint.
-    //
-    // Ordering, not timing-coincidence, is what fixes this: settle
-    // natureCover into true center HERE, in the assembly window,
-    // while it's still fully transparent (opacity 0 until 1.0) — so
-    // position is already correct, pixel-for-pixel matching the
-    // window, before opacity ever starts rising. There is then no
-    // window-vs-image gap to expose at ANY intermediate opacity during
-    // Beat 3b, because the two already coincide exactly, opacity
-    // aside. (The double-image risk this offset originally guarded
-    // against doesn't apply here precisely because this move happens
-    // while natureCover is invisible — nothing to double yet.)
-    tl.to(natureCover, { yPercent: -50, duration: 0.2 }, 0.8);
-
     // Beat 3b — tail crossfade: only once assembly (above) is done,
-    // the live scene dissolves into the real cover_nature.png.
+    // the live artwork dissolves into the real cover_nature.png.
     // Positioned at timeline time 1.0 — i.e. after every tween above
     // has finished — this simply extends the timeline's total
     // duration rather than editing any position above, so it can't
@@ -449,31 +441,21 @@ export async function initHero() {
     // all anymore (see buildSceneDrift) — so there's nothing to
     // exclude here.
     //
-    // overlay and natureCover are TWO SEPARATE COPIES of the same
-    // masthead text, independently positioned (overlay rides inside
-    // engine, at its settled drift offset; natureCover sits at true
-    // center — see above). A straight simultaneous cross-dissolve
-    // between them — engine (carrying overlay) fading 1→0 while
-    // natureCover fades 0→1 over the same window — means both are
-    // partially opaque at once for the whole duration, and since they
-    // don't share a position, that reads as doubled, offset text the
-    // entire time, not just at one bad frame. No amount of repositioning
-    // either one fixes this on its own: whatever makes them coincide
-    // during THIS fade (matching engine's offset) is exactly what
-    // reopens the frame-edge gap fixed above, and whatever fixes that
-    // gap (true center) is exactly what breaks the coincidence here.
-    //
-    // The actual fix is to never let both be visible at once: overlay
-    // gets pulled out of engine's shared fade and given its own,
-    // faster opacity tween that finishes FIRST — engine's own opacity
-    // (disk/jets/magnetar, none of which have text to double) still
-    // runs the full window — and natureCover's fade-in doesn't begin
-    // until overlay has fully reached 0. The two text copies are then
-    // temporally disjoint: confirmed gone before the other starts to
-    // appear, so their differing positions never matter.
-    tl.to(overlay, { opacity: 0, duration: 0.06 }, 1.0);
-    tl.to(engine, { opacity: 0, duration: 0.15 }, 1.0);
-    tl.to(natureCover, { opacity: 1, duration: 0.09 }, 1.06);
+    // overlay is deliberately NOT included in this fade. overlay and
+    // natureCover share the exact same box (.hero-layer--cover-box,
+    // hero.css) as siblings inside .hero-engine — same position, same
+    // size, same transform, same 880×1168 source canvas — so their
+    // text sits at identical pixels. With that guaranteed, there's no
+    // need to fade overlay out at all: it stays at opacity 1 (set
+    // during assembly, above) for the rest of the hero, and
+    // natureCover simply fades in on top of it. The masthead text is
+    // therefore continuously present and perfectly stationary through
+    // the whole crossfade — never doubled (nothing to double against;
+    // same pixels), never dipping to invisible (overlay's copy is
+    // always there) — only the artwork around/behind it (liveArt)
+    // resolves from live scene to flat print.
+    tl.to(liveArt, { opacity: 0, duration: 0.15 }, 1.0);
+    tl.to(natureCover, { opacity: 1, duration: 0.15 }, 1.0);
 
     // Beat 3c — tail exit: the resolve holds fully framed from 1.15 to
     // 1.20 (a deliberate pause before anything else moves — the
@@ -483,9 +465,7 @@ export async function initHero() {
     // the resolve — fade away, so the small, cover-sized nature image
     // that's left has no opaque margins around it as it scrolls off:
     // just the same continuous .bg-fixed scene the rest of the page
-    // sits on, not a black-bordered box cutting to it. natureCover
-    // needs no further position correction here — it's been sitting
-    // at true center, exactly matching this window, since 0.8-1.0.
+    // sits on, not a black-bordered box cutting to it.
     tl.to([bars.left, bars.right, bars.top, bars.bottom, ...corners], { opacity: 0, duration: 0.15 }, 1.20);
 
     st = ScrollTrigger.create({

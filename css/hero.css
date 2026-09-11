@@ -51,15 +51,17 @@
                                   strong/fast parallax)
       .hero-pin              the pinned 100vh viewport window
         .hero-engine           disk + magnetar + all jet pieces + the
-                                cover's text overlay — ONE rigid group,
-                                sized and scaled independently of the
-                                stage (matches cover_art.jpeg's
-                                contained composition; see hero.js for
-                                why the scale is JS-measured once).
-                                Everything inside shares ONE parallax
-                                transform (set on .hero-engine itself
-                                in hero.js) — weak/slow, the still
-                                center the dust rushes past.
+                                cover's text overlay + cover_nature.png
+                                — ONE rigid group, sized and scaled
+                                independently of the stage (matches
+                                cover_art.jpeg's contained composition;
+                                see hero.js for why the scale is
+                                JS-measured once). Everything inside
+                                shares ONE parallax transform (set on
+                                .hero-engine itself in hero.js) — an
+                                unmoving true-center settle (no residual
+                                drift — see hero.js), the still center
+                                the dust rushes past.
           .hero-layer--jet-lower  (behind the disk)
           .hero-layer--disk
           .hero-layer--magnetar   (in front of the disk, at center)
@@ -69,8 +71,16 @@
                                     ends; don't overlap the disk, so
                                     sitting this late doesn't affect it)
           .hero-layer--overlay    (Nature masthead + cover text — the
-                                    Beat-3 reveal; registered to this
-                                    same square canvas, see below)
+                                    Beat-3 reveal. Shares
+                                    .hero-layer--cover-box, below, with
+                                    .hero-layer--nature — SAME box, so
+                                    their text (same 880×1168 canvas)
+                                    sits at identical pixels)
+          .hero-layer--nature     (cover_nature.png, the real printed
+                                    cover — fades in on TOP of overlay,
+                                    inside the SAME .hero-engine group,
+                                    not a separate top-level element —
+                                    see hero.js for why)
         .hero-frame-bar × 4    margins that close in to the cover's
                                 trim size, concurrent with the overlay
                                 — then fade out again (opacity only,
@@ -78,10 +88,8 @@
                                 has fully held, so the exiting cover has
                                 no opaque margins around it
         .hero-frame-corner × 4 rounds that window's corners, same
-                                radius as .hero-layer--nature below;
+                                radius as .hero-layer--nature above;
                                 fades out alongside the bars, same tween
-        .hero-layer--nature    cover_nature.png — the tail-end
-                                crossfade target, once assembly is done
         .hero-copy             title / dek
         .hero-statements       three Beat-2 captions, shown one at a
                                 time between the title's exit and the
@@ -310,53 +318,45 @@
 }
 
 /* ---------------------------------------------------------------
-   The cover text overlay — cover_text_overlay.png is cover_nature.png
-   with the artwork removed, at the same 880×1168 trim. That crop
-   keeps the square canvas's full height and shaves the sides down to
-   the cover's aspect ratio, so in the SAME percentage system every
-   other .hero-engine child uses:
+   .hero-layer--cover-box — the ONE shared position/size rule for
+   BOTH cover_text_overlay.png and cover_nature.png. They're the same
+   880×1168 canvas (the overlay is cover_nature.png with the artwork
+   erased — same crop, same pixels, same text), so putting them both
+   through this identical rule, as siblings inside the SAME
+   .hero-engine, is what guarantees their text lines up exactly: no
+   per-element registration math, nothing to drift out of sync,
+   nothing to verify beyond "do both elements use this one class" —
+   their getBoundingClientRect()s are identical by construction, not
+   by coincidence.
      width%  = cover-ratio-w / cover-ratio-h   (the crop keeps this
                fraction of the canvas's width)
      left%   = (1 - width%) / 2                 (crop is centered)
      top/height% = 0 / 100                       (no vertical crop)
    Because .hero-engine's own box is sized so scale:1 makes this
-   overlay exactly --frame-w wide (see .hero-engine above), the
-   overlay's transparent disk-shaped hole lands exactly on the live
-   disk at every moment, automatically, in both Beat 1/2 (small,
-   scaled up) and the Beat-3 settle (scale 1, filling the frame).
+   exactly --frame-w wide (see .hero-engine above), the overlay's
+   transparent disk-shaped hole lands exactly on the live disk at
+   every moment, automatically, in both Beat 1/2 (small, scaled up)
+   and the Beat-3 settle (scale 1, filling the frame) — and
+   cover_nature.png, sharing the same box, lands exactly over that
+   same disk position once it fades in on top.
 ------------------------------------------------------------------ */
-.hero-layer--overlay {
+.hero-layer--cover-box {
   top: 0;
   height: 100%;
   left: calc((100% - 100% * var(--cover-ratio-w) / var(--cover-ratio-h)) / 2);
   width: calc(100% * var(--cover-ratio-w) / var(--cover-ratio-h));
   object-fit: fill;
-  opacity: 0;
 }
 
-/* ---------------------------------------------------------------
-   The published cover — cover_nature.png, the same 880×1168 asset
-   cover_text_overlay.png was cut from, so it shares that overlay's
-   exact registration. Sized/centered to --frame-w/--frame-h directly
-   (a frame-level sibling, not nested in .hero-engine) so it stays put
-   at its final size while the engine's own scale settles underneath
-   it — the tail-end crossfade (hero.js) fades this in as the live
-   stage+engine composition fades out, once assembly is complete.
------------------------------------------------------------------- */
+.hero-layer--overlay {
+  opacity: 0; /* GSAP-driven: 0 → 1 once during assembly, then left
+                 at 1 for good — see hero.js */
+}
+
 .hero-layer--nature {
-  top: 50%;
-  left: 50%;
-  width: var(--frame-w);
-  height: var(--frame-h);
-  object-fit: cover;
-  opacity: 0;
+  opacity: 0; /* GSAP-driven: 0 → 1 during the tail crossfade, on top
+                 of the (already fully opaque) overlay above */
   border-radius: var(--radius-cover);
-  /* No CSS transform here — hero.js sets xPercent/yPercent (matching
-     .hero-engine's own centering pattern) instead of a static
-     translate(-50%,-50%), because .hero-engine sits a few percent off
-     dead-center by the time this crossfades in (its constant "weak
-     drift" offset, settled). This element is pre-positioned to that
-     same offset so the two register instead of visibly jumping. */
 }
 
 /* ---------------------------------------------------------------
