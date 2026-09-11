@@ -82,7 +82,7 @@
                                 fades out alongside the bars, same tween
         .hero-layer--nature    cover_nature.png — the tail-end
                                 crossfade target, once assembly is done
-        .hero-copy             eyebrow / title / dek
+        .hero-copy             title / dek
         .hero-statements       three Beat-2 captions, shown one at a
                                 time between the title's exit and the
                                 assembly window opening (see hero.js)
@@ -457,15 +457,6 @@
   z-index: -1;
 }
 
-.hero-eyebrow {
-  font-size: var(--step--1);
-  font-weight: var(--weight-medium);
-  color: var(--text-dim);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-  margin-bottom: var(--space-3);
-}
-
 .hero-title {
   max-width: 16ch;
   font-size: var(--step-5);
@@ -482,6 +473,14 @@
   font-weight: var(--weight-light);
   line-height: var(--leading-normal);
   color: var(--text-dim);
+}
+
+/* The CHIRPS acronym letters within the dek — bold, same color as the
+   surrounding text (not --text, so it doesn't also read as an accent
+   color change, just weight). */
+.hero-dek strong {
+  font-weight: var(--weight-bold);
+  color: inherit;
 }
 
 /* ---------------------------------------------------------------

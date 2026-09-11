@@ -42,21 +42,32 @@
  *      moves. No flat image is involved yet — the live disk showing
  *      through the overlay's negative space *is* the cover here.
  *   2. Tail-end crossfade — only once part 1 is fully assembled, the
- *      live engine (the overlay riding along inside it) fades to 0
- *      opacity while cover_nature.png (the same 880×1168 asset the
- *      overlay was cut from, so it shares its exact registration)
- *      fades to 1 — a single dissolve, freezing the living scene into
- *      the printed artifact, for a pixel-clean final frame. natureCover
- *      is ALREADY sitting exactly in the frame window by this point
- *      (settled in part 1, while invisible) — position and opacity are
- *      deliberately never animated in the same window for this
- *      element, so there's no gap between image and frame to expose
- *      at any intermediate opacity, only at the two extremes. (An
- *      earlier version settled position only in part 3, below, or
- *      concurrently with the fade — both left a real, visible gap for
- *      the fade's own duration; ordering position-then-opacity, not
- *      just timing them to roughly coincide, is what actually fixes
- *      it.)
+ *      live scene dissolves into cover_nature.png (the same 880×1168
+ *      asset the overlay was cut from, so it shares its exact
+ *      registration), freezing the living scene into the printed
+ *      artifact, for a pixel-clean final frame. natureCover is ALREADY
+ *      sitting exactly in the frame window by this point (settled in
+ *      part 1, while invisible) — position and opacity are deliberately
+ *      never animated in the same window for this element, so there's
+ *      no gap between image and frame to expose at any intermediate
+ *      opacity, only at the two extremes. (An earlier version settled
+ *      position only in part 3, below, or concurrently with the fade —
+ *      both left a real, visible gap for the fade's own duration;
+ *      ordering position-then-opacity, not just timing them to roughly
+ *      coincide, is what actually fixes that.)
+ *
+ *      Within this dissolve, overlay (the masthead text riding inside
+ *      engine) is NOT simply carried down by engine's own fade — it
+ *      gets pulled out and given its own faster fade that finishes
+ *      first, so it's confirmed fully gone before natureCover (a
+ *      second, independently-positioned copy of the same text) starts
+ *      to appear. The two never overlap in time, which is what actually
+ *      prevents doubled/ghosted text — engine and natureCover sit at
+ *      slightly different positions (see part 1's note above), so a
+ *      simultaneous cross-dissolve between their two text copies reads
+ *      as doubled text for the fade's entire duration, no matter how
+ *      either one is repositioned; disjoint timing, not registration,
+ *      is the actual fix.
  *   3. Tail-end exit — once the resolve has fully held, the four bars
  *      and their corner-rounding patches (only ever an assembly
  *      effect for reaching the resolve) fade away too, so what's left
@@ -126,10 +137,22 @@
 //                                          through the hold and the
 //                                          fade-out, so there's no
 //                                          reverse motion)
-//   engine opacity                1 → 0     (tail crossfade — carries
-//                                          the overlay down with it,
-//                                          since it's engine's child)
-//   nature-cover opacity          0 → 1     (tail crossfade)
+//   overlay opacity (2nd row)     1 → 0     (tail crossfade, first ~40%
+//                                          of the window only — pulled
+//                                          out of engine's own fade so
+//                                          the masthead text is
+//                                          confirmed gone before
+//                                          nature-cover's copy of it
+//                                          starts to appear; see the
+//                                          Beat 3b comment for why)
+//   engine opacity                1 → 0     (tail crossfade, full
+//                                          window — disk/jets/magnetar,
+//                                          nothing here has text to
+//                                          double against nature-cover)
+//   nature-cover opacity          0 → 1     (tail crossfade, LAST ~60%
+//                                          of the window only, starting
+//                                          after overlay's own row above
+//                                          has already reached 0)
 //   bar scaleX/scaleY             — no change; bars stay fully closed
 //   bar/corner opacity            1 → 0     (tail exit, AFTER the
 //                                          crossfade has fully held —
@@ -417,18 +440,40 @@ export async function initHero() {
     tl.to(natureCover, { yPercent: -50, duration: 0.2 }, 0.8);
 
     // Beat 3b — tail crossfade: only once assembly (above) is done,
-    // one single dissolve from the live engine (the overlay riding
-    // along inside it) to the real cover_nature.png. Positioned at
-    // timeline time 1.0 — i.e. after every tween above has finished —
-    // this simply extends the timeline's total duration rather than
-    // editing any position above, so it can't disturb the
-    // already-verified assembly timing. stage/bg/haze are never part
-    // of this fade — they're not part of this timeline at all
-    // anymore (see buildSceneDrift) — so there's nothing to exclude
-    // here; the resolve is just engine → 0, natureCover → 1, both
-    // already sitting at their final, matching positions.
+    // the live scene dissolves into the real cover_nature.png.
+    // Positioned at timeline time 1.0 — i.e. after every tween above
+    // has finished — this simply extends the timeline's total
+    // duration rather than editing any position above, so it can't
+    // disturb the already-verified assembly timing. stage/bg/haze are
+    // never part of this fade — they're not part of this timeline at
+    // all anymore (see buildSceneDrift) — so there's nothing to
+    // exclude here.
+    //
+    // overlay and natureCover are TWO SEPARATE COPIES of the same
+    // masthead text, independently positioned (overlay rides inside
+    // engine, at its settled drift offset; natureCover sits at true
+    // center — see above). A straight simultaneous cross-dissolve
+    // between them — engine (carrying overlay) fading 1→0 while
+    // natureCover fades 0→1 over the same window — means both are
+    // partially opaque at once for the whole duration, and since they
+    // don't share a position, that reads as doubled, offset text the
+    // entire time, not just at one bad frame. No amount of repositioning
+    // either one fixes this on its own: whatever makes them coincide
+    // during THIS fade (matching engine's offset) is exactly what
+    // reopens the frame-edge gap fixed above, and whatever fixes that
+    // gap (true center) is exactly what breaks the coincidence here.
+    //
+    // The actual fix is to never let both be visible at once: overlay
+    // gets pulled out of engine's shared fade and given its own,
+    // faster opacity tween that finishes FIRST — engine's own opacity
+    // (disk/jets/magnetar, none of which have text to double) still
+    // runs the full window — and natureCover's fade-in doesn't begin
+    // until overlay has fully reached 0. The two text copies are then
+    // temporally disjoint: confirmed gone before the other starts to
+    // appear, so their differing positions never matter.
+    tl.to(overlay, { opacity: 0, duration: 0.06 }, 1.0);
     tl.to(engine, { opacity: 0, duration: 0.15 }, 1.0);
-    tl.to(natureCover, { opacity: 1, duration: 0.15 }, 1.0);
+    tl.to(natureCover, { opacity: 1, duration: 0.09 }, 1.06);
 
     // Beat 3c — tail exit: the resolve holds fully framed from 1.15 to
     // 1.20 (a deliberate pause before anything else moves — the
