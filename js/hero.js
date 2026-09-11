@@ -192,19 +192,29 @@ export async function initHero() {
   const parallaxScale = isMobile ? 0.6 : 1;
   const dyn = (base) => base * parallaxScale;
 
-  // Single source of truth for how far each parallax layer travels —
-  // read by both the timeline below AND computeEdgeSafeScale, so the
-  // edge-safety headroom is always derived from the actual motion,
-  // never a re-typed guess that could drift out of sync with it.
+  // Single source of truth for how far each parallax layer travels.
+  // stage is read by both the timeline below AND computeEdgeSafeScale,
+  // so bg_environment's edge-safety headroom is always derived from
+  // its actual motion, never a re-typed guess that could drift out of
+  // sync with it. haze1-4 are read by the timeline only — they don't
+  // feed computeEdgeSafeScale because they don't need it (see the
+  // edge-safety comment below), so their numbers are free to be tuned
+  // purely for feel.
   // (parallaxScale only ever shrinks these on mobile, so the base,
   // unscaled number is always the worst case across breakpoints.)
+  //
+  // haze1-4 were pushed well past the ~1.8× the hero's lengthened pin
+  // (see .hero in hero.css) would need just to break even on
+  // per-scroll-pixel speed — the ask was for the dust to end up
+  // MORE dynamic than before, not merely as fast, independent of how
+  // much longer the Beat-2 statements now get to dwell.
   const DRIFT = {
     stage: 4,
     engine: 3,
-    haze1: { x: -62, y: 80 },
-    haze2: { x: 66, y: 92 },
-    haze3: { x: 56, y: -72 },
-    haze4: { x: -70, y: -88 },
+    haze1: { x: -136, y: 176 },
+    haze2: { x: 145, y: 202 },
+    haze3: { x: 123, y: -158 },
+    haze4: { x: -154, y: -194 },
   };
 
   /**
@@ -224,6 +234,19 @@ export async function initHero() {
    * with — measured pixels; it's still recomputed on resize below
    * simply because it lives inside buildScrollSequence, which resize
    * already re-runs.
+   *
+   * Only bg_environment needs this: it's opaque and sized to exactly
+   * fill its (oversized) container, so a hard image edge is only ever
+   * one scroll-tick away from sliding into frame. The four haze layers
+   * are exempt by construction, no matter how large DRIFT.haze1-4 get —
+   * each carries its own radial-gradient mask (hero.css) that fades
+   * to fully transparent at its own box's edge, and that mask travels
+   * WITH the element under xPercent/yPercent (it isn't clipped against
+   * the viewport). So there's no hard boundary for any amount of
+   * translation to expose; increasing haze drift only needs a visual
+   * check that the whole soft-edged blob still reads as haze, not a
+   * recomputed scale. Confirmed at the increased displacement above —
+   * see the mid-scroll screenshot.
    */
   function computeEdgeSafeScale(maxDriftPercent, marginPercent = 6) {
     return 1 + (2 * (Math.abs(maxDriftPercent) + marginPercent)) / 100;

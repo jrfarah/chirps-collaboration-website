@@ -56,7 +56,17 @@
 
 .hero {
   position: relative;
-  height: 300vh;
+  /* Pin length — 460vh (100vh pinned viewport + 360vh of scroll) is
+     1.8× the scrollable distance this used to be (was 300vh total,
+     200vh scrollable). Every scroll-driven phase is scrubbed linearly
+     across whatever this is, so lengthening it here is what actually
+     slows the Beat-2 statements' dwell (~1.8× more scroll to fade in/
+     hold/fade out each) without touching their timeline positions in
+     hero.js at all. It equally slows the dust's per-scroll-pixel
+     speed, which is why DRIFT.haze1-4 in hero.js were pushed up well
+     past 1.8× — to counter this stretch AND still feel livelier than
+     before, independent of how long the text now dwells. */
+  height: 460vh;
   background: var(--bg);
 
   /* The Nature cover's own trim ratio — used to size the closing
