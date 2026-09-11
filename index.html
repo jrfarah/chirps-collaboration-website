@@ -51,10 +51,11 @@
       </div>
 
       <div class="hero-engine" data-hero-engine>
-        <img class="hero-layer hero-layer--jetglow jetglow-1" data-hero-jetglow-1
-             src="assets/cover/jet_glow_1.png" alt="" />
-        <img class="hero-layer hero-layer--jetglow jetglow-2" data-hero-jetglow-2
-             src="assets/cover/jet_glow_2.png" alt="" />
+        <!-- Both jet beams sit BEHIND their own base glow (glow reads
+             as the wider, softer light the beam emerges from — it
+             should sit in front, not the other way round). Neither
+             glow overlaps the disk/magnetar region, so moving them
+             this late in the stack doesn't change anything there. -->
         <img class="hero-layer hero-layer--jet-lower" data-hero-jet-lower
              src="assets/cover/jet_lower.png" alt="" />
         <img class="hero-layer hero-layer--disk" data-hero-disk
@@ -63,6 +64,10 @@
              src="assets/cover/magnetar_core.png" alt="" />
         <img class="hero-layer hero-layer--jet-upper" data-hero-jet-upper
              src="assets/cover/jet_upper.png" alt="" />
+        <img class="hero-layer hero-layer--jetglow jetglow-1" data-hero-jetglow-1
+             src="assets/cover/jet_glow_1.png" alt="" />
+        <img class="hero-layer hero-layer--jetglow jetglow-2" data-hero-jetglow-2
+             src="assets/cover/jet_glow_2.png" alt="" />
         <!-- The authentic Nature masthead + cover text, transparent
              where the artwork shows through. Positioned at the exact
              crop this asset represents of the shared square canvas
@@ -79,6 +84,13 @@
       <div class="hero-frame-bar hero-frame-bar--top" data-hero-bar="top"></div>
       <div class="hero-frame-bar hero-frame-bar--bottom" data-hero-bar="bottom"></div>
 
+      <!-- Rounds the window the bars leave open, to match
+           cover_nature.png's own corner radius — see hero.css. -->
+      <div class="hero-frame-corner hero-frame-corner--tl" data-hero-corner="tl"></div>
+      <div class="hero-frame-corner hero-frame-corner--tr" data-hero-corner="tr"></div>
+      <div class="hero-frame-corner hero-frame-corner--bl" data-hero-corner="bl"></div>
+      <div class="hero-frame-corner hero-frame-corner--br" data-hero-corner="br"></div>
+
       <!-- The published cover, once assembly (overlay + bars) is
            complete: a single tail-end crossfade from the live
            stage+engine composition to this real, pixel-clean asset —
@@ -92,6 +104,22 @@
         <p class="hero-eyebrow">SN 2024AFAV</p>
         <h1 class="hero-title">The supernova that chirps.</h1>
         <p class="hero-dek">A dying star&rsquo;s light, oscillating faster and faster — the fingerprint of a newborn magnetar warping spacetime.</p>
+      </div>
+
+      <!-- Beat 2: three captions, one at a time, over the drifting
+           dust — appear after the title has fully lifted away and
+           are fully gone again before the cover overlay/bars start
+           assembling. See hero.js for the scroll timing. -->
+      <div class="hero-statements" data-hero-statements>
+        <div class="hero-statement" data-hero-statement="1">
+          <p class="hero-statement-text">Out of 15,000 known supernovae, the first chirp.</p>
+        </div>
+        <div class="hero-statement" data-hero-statement="2">
+          <p class="hero-statement-text">The strongest confirmation yet of an infant magnetar at the heart of a dying star.</p>
+        </div>
+        <div class="hero-statement" data-hero-statement="3">
+          <p class="hero-statement-text">The first hint of general relativity in a completely new regime—the violent vicinities of young supernovae.</p>
+        </div>
       </div>
 
       <div class="hero-scrollcue" data-hero-scrollcue aria-hidden="true">
@@ -111,6 +139,14 @@
          (also cover_nature.png) for users who've asked for no motion,
          entirely separate from the live scroll sequence above. -->
     <div class="hero-static-resolve">
+      <!-- Same three Beat-2 statements as the animated sequence above,
+           just static (no fade, no motion) since this whole block
+           replaces scroll-jacking, not a scroll position within it. -->
+      <div class="hero-statements--static">
+        <p class="hero-statement-text">Out of 15,000 known supernovae, the first chirp.</p>
+        <p class="hero-statement-text">The strongest confirmation yet of an infant magnetar at the heart of a dying star.</p>
+        <p class="hero-statement-text">The first hint of general relativity in a completely new regime—the violent vicinities of young supernovae.</p>
+      </div>
       <div class="hero-cover-frame--static">
         <img src="assets/cover_nature.png"
              alt="Nature magazine cover, 12 March 2026: “Power Sourced — the extreme physics at the heart of superluminous supernovae,” featuring the SN 2024afav accretion disk and relativistic jet." />

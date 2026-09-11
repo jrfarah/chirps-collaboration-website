@@ -78,6 +78,9 @@
   --content-max: 68ch;      /* prose measure */
   --content-pad: var(--space-4); /* min side gutter on narrow viewports */
   --radius: 3px;            /* restrained — this is not a rounded-card UI */
+  --radius-cover: 6px;      /* the printed cover + its live-scene window —
+                                just enough to take the sharpness off the
+                                corners, barely noticeable */
 
   /* ---------------------------------------------------------------
      Motion — slow, heavy, buttery. Nothing snappy.

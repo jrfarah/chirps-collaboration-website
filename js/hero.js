@@ -84,8 +84,33 @@
 //   overlay scale                1.15 → 1  (assembly window)
 //   bar scaleX (left/right)      0 → 1     (assembly window)
 //   bar scaleY (top/bottom)      0 → 1     (assembly window)
+//   corner opacity (×4)          0 → 1     (assembly window — rounds
+//                                          the window the bars leave)
 //   caption opacity              0 → 1     (assembly window)
 //   caption yPercent             4 → 0     (assembly window)
+//   statement opacity (×3)       0 → 1 → 0 (Beat 2 only — the one
+//                                          deliberate exception to
+//                                          single-direction motion:
+//                                          each of the three is a
+//                                          fully isolated, non-
+//                                          overlapping fade-in/hold/
+//                                          fade-out, done and back at
+//                                          0 before the next begins
+//                                          or the assembly window
+//                                          opens. No two of the three
+//                                          are ever above 0 at once,
+//                                          and each one's own fade-in
+//                                          and fade-out are themselves
+//                                          monotonic — it's only the
+//                                          element considered whole,
+//                                          across its own brief
+//                                          window, that goes up then
+//                                          down.
+//   statement yPercent (×3)      4 → 0     (fade-in only, once, per
+//                                          element — stays at 0
+//                                          through the hold and the
+//                                          fade-out, so there's no
+//                                          reverse motion)
 //   stage opacity                1 → 0     (tail crossfade, after
 //                                          assembly is complete)
 //   engine opacity                1 → 0     (tail crossfade — carries
@@ -134,12 +159,14 @@ export async function initHero() {
   const copy = hero.querySelector('[data-hero-copy]');
   const scrollcue = hero.querySelector('[data-hero-scrollcue]');
   const caption = hero.querySelector('[data-hero-caption]');
+  const statements = Array.from(hero.querySelectorAll('[data-hero-statement]'));
   const bars = {
     left: hero.querySelector('[data-hero-bar="left"]'),
     right: hero.querySelector('[data-hero-bar="right"]'),
     top: hero.querySelector('[data-hero-bar="top"]'),
     bottom: hero.querySelector('[data-hero-bar="bottom"]'),
   };
+  const corners = Array.from(hero.querySelectorAll('[data-hero-corner]'));
 
   await preloadLayers(hero);
   pin.classList.add('is-ready');
@@ -260,8 +287,10 @@ export async function initHero() {
     gsapLib.set(natureCover, { xPercent: -50, yPercent: -50 + dyn(DRIFT.engine), opacity: 0 });
     gsapLib.set([bars.left, bars.right], { scaleX: 0 });
     gsapLib.set([bars.top, bars.bottom], { scaleY: 0 });
+    gsapLib.set(corners, { opacity: 0 });
     gsapLib.set(copy, { opacity: 1, yPercent: 0 });
     gsapLib.set(caption, { opacity: 0, yPercent: 4 });
+    gsapLib.set(statements, { opacity: 0, yPercent: 4 });
 
     tl = gsapLib.timeline({ defaults: { ease: 'none' } });
 
@@ -282,6 +311,19 @@ export async function initHero() {
     // which is what actually reads as "still" while the dust flies.
     tl.to(engine, { yPercent: -50 + dyn(DRIFT.engine), duration: 1 }, 0);
 
+    // Beat 2 statements — three captions, one at a time, evenly spaced
+    // between the title's exit (done by 0.15) and the assembly window
+    // opening (0.8): each gets an identical 0.03 fade-in / 0.09 hold /
+    // 0.03 fade-out (0.15 total), with a 0.05 gap on every side, so
+    // none overlap and the last is back at opacity 0 a full 0.05 of
+    // scroll before the cover overlay/bars begin.
+    tl.to(statements[0], { opacity: 1, yPercent: 0, duration: 0.03 }, 0.20);
+    tl.to(statements[0], { opacity: 0, duration: 0.03 }, 0.32);
+    tl.to(statements[1], { opacity: 1, yPercent: 0, duration: 0.03 }, 0.40);
+    tl.to(statements[1], { opacity: 0, duration: 0.03 }, 0.52);
+    tl.to(statements[2], { opacity: 1, yPercent: 0, duration: 0.03 }, 0.60);
+    tl.to(statements[2], { opacity: 0, duration: 0.03 }, 0.72);
+
     // Beat 3a — assembly: the real Nature text settles onto the
     // still-live scene, the engine eases from its Beat-1 scale-up
     // down to 1 (its frame-matching resting size), and the frame
@@ -294,6 +336,7 @@ export async function initHero() {
     tl.to(overlay, { opacity: 1, scale: 1, duration: 0.2 }, 0.8);
     tl.to([bars.left, bars.right], { scaleX: 1, duration: 0.2 }, 0.8);
     tl.to([bars.top, bars.bottom], { scaleY: 1, duration: 0.2 }, 0.8);
+    tl.to(corners, { opacity: 1, duration: 0.2 }, 0.8);
     tl.to(caption, { opacity: 1, yPercent: 0, duration: 0.1 }, 0.9);
 
     // Beat 3b — tail crossfade: only once assembly (above) is done,

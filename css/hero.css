@@ -29,19 +29,27 @@
                                 transform (set on .hero-engine itself
                                 in hero.js) — weak/slow, the still
                                 center the dust rushes past.
-          .jetglow-1 / .jetglow-2 (top / bottom jet-base flares)
           .hero-layer--jet-lower  (behind the disk)
           .hero-layer--disk
           .hero-layer--magnetar   (in front of the disk, at center)
-          .hero-layer--jet-upper  (crosses in front of everything)
+          .hero-layer--jet-upper  (crosses in front of the disk)
+          .jetglow-1 / .jetglow-2 (top / bottom jet-base flares — in
+                                    front of their own beam at both
+                                    ends; don't overlap the disk, so
+                                    sitting this late doesn't affect it)
           .hero-layer--overlay    (Nature masthead + cover text — the
                                     Beat-3 reveal; registered to this
                                     same square canvas, see below)
         .hero-frame-bar × 4    margins that close in to the cover's
                                 trim size, concurrent with the overlay
+        .hero-frame-corner × 4 rounds that window's corners, same
+                                radius as .hero-layer--nature below
         .hero-layer--nature    cover_nature.png — the tail-end
                                 crossfade target, once assembly is done
         .hero-copy             eyebrow / title / dek
+        .hero-statements       three Beat-2 captions, shown one at a
+                                time between the title's exit and the
+                                assembly window opening (see hero.js)
         .hero-scrollcue
         .hero-caption
 */
@@ -56,6 +64,12 @@
      overlay at the exact crop it represents. */
   --frame-w: min(92vw, calc(72vh * var(--cover-ratio-w) / var(--cover-ratio-h)));
   --frame-h: min(72vh, calc(92vw * var(--cover-ratio-h) / var(--cover-ratio-w)));
+
+  /* The leftover margin outside that frame on each axis — shared by
+     the closing bars AND the four corner-rounding patches below, so
+     the patches can never drift out of alignment with the bars. */
+  --frame-margin-x: calc((100vw - var(--frame-w)) / 2);
+  --frame-margin-y: calc((100vh - var(--frame-h)) / 2);
 }
 
 .hero-pin {
@@ -246,6 +260,7 @@
   height: var(--frame-h);
   object-fit: cover;
   opacity: 0;
+  border-radius: var(--radius-cover);
   /* No CSS transform here — hero.js sets xPercent/yPercent (matching
      .hero-engine's own centering pattern) instead of a static
      translate(-50%,-50%), because .hero-engine sits a few percent off
@@ -268,7 +283,7 @@
 .hero-frame-bar--right {
   top: 0;
   height: 100vh;
-  width: calc((100vw - var(--frame-w)) / 2);
+  width: var(--frame-margin-x);
   transform: scaleX(0);
 }
 .hero-frame-bar--left   { left: 0;  transform-origin: left center; }
@@ -278,11 +293,55 @@
 .hero-frame-bar--bottom {
   left: 0;
   width: 100vw;
-  height: calc((100vh - var(--frame-h)) / 2);
+  height: var(--frame-margin-y);
   transform: scaleY(0);
 }
 .hero-frame-bar--top    { top: 0;    transform-origin: top center; }
 .hero-frame-bar--bottom { bottom: 0; transform-origin: bottom center; }
+
+/* ---------------------------------------------------------------
+   Corner rounding for the window the bars leave open. The bars
+   themselves can't do this — each is a plain rectangle, and the
+   window's actual corner point sits in the middle of a bar's edge
+   (inset by the OTHER axis's margin), not at that bar's own corner,
+   so a border-radius on a bar rounds the wrong point entirely. These
+   four small patches sit right on top of the bars at each of the
+   window's true corners; each is a radial-gradient that's --bg
+   outside a quarter-circle of radius --radius-cover and transparent
+   inside it, centered on the point --radius-cover in from the
+   corner — the standard "round a rectangular cutout" trick. Same
+   radius as .hero-layer--nature, so the live-scene window and the
+   printed cover it dissolves into read as the same frame. Fixed in
+   place (margins are constant); hero.js only fades their opacity in,
+   alongside the bars.
+------------------------------------------------------------------ */
+.hero-frame-corner {
+  position: absolute;
+  width: var(--radius-cover);
+  height: var(--radius-cover);
+  opacity: 0;
+  will-change: opacity;
+}
+.hero-frame-corner--tl {
+  left: var(--frame-margin-x);
+  top: var(--frame-margin-y);
+  background: radial-gradient(circle at 100% 100%, transparent var(--radius-cover), var(--bg) var(--radius-cover));
+}
+.hero-frame-corner--tr {
+  right: var(--frame-margin-x);
+  top: var(--frame-margin-y);
+  background: radial-gradient(circle at 0% 100%, transparent var(--radius-cover), var(--bg) var(--radius-cover));
+}
+.hero-frame-corner--bl {
+  left: var(--frame-margin-x);
+  bottom: var(--frame-margin-y);
+  background: radial-gradient(circle at 100% 0%, transparent var(--radius-cover), var(--bg) var(--radius-cover));
+}
+.hero-frame-corner--br {
+  right: var(--frame-margin-x);
+  bottom: var(--frame-margin-y);
+  background: radial-gradient(circle at 0% 0%, transparent var(--radius-cover), var(--bg) var(--radius-cover));
+}
 
 /* ---------------------------------------------------------------
    Copy
@@ -333,6 +392,57 @@
   font-weight: var(--weight-light);
   line-height: var(--leading-normal);
   color: var(--text-dim);
+}
+
+/* ---------------------------------------------------------------
+   Beat-2 statements — three captions shown one at a time over the
+   drifting dust, after the title has lifted away and before the
+   cover overlay/bars start assembling (see hero.js for the exact
+   scroll timing). Stacked directly on top of one another (each its
+   own inset:0 box) rather than laid out in flow, so animating one
+   in/out never shifts the others' centered position.
+------------------------------------------------------------------ */
+.hero-statements {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.hero-statements::before {
+  content: '';
+  position: absolute;
+  inset: -10% -10%;
+  background: radial-gradient(ellipse at center, var(--scrim) 0%, transparent 65%);
+  z-index: -1;
+}
+
+.hero-statement {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-inline: var(--content-pad);
+  opacity: 0; /* GSAP-driven, Beat 2 only — matches the Beat-1 rest
+                 state before hero.js's initial gsapLib.set() runs,
+                 and (with no JS/reduced-motion) keeps these three out
+                 of the static Beat-1 render below; see
+                 .hero-statements--static for that path's own copy. */
+  will-change: transform, opacity;
+}
+
+/* Shared with the reduced-motion static fallback below, so the
+   wording reads identically whether it's scroll-driven or static. */
+.hero-statement-text {
+  max-width: 30ch;
+  margin: 0;
+  text-align: center;
+  font-size: var(--step-3);
+  font-weight: var(--weight-light);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text);
 }
 
 /* ---------------------------------------------------------------
@@ -429,6 +539,20 @@
     gap: var(--space-4);
     padding-block: var(--space-7);
     background: var(--bg);
+  }
+
+  /* Same three Beat-2 statements as the animated sequence, just
+     always visible and unanimated — this whole block replaces the
+     scroll-jacked journey rather than sitting at a position within
+     it, so there's no single "scroll progress" for them to fade
+     against; showing all three, plainly, is the static equivalent. */
+  .hero-statements--static {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+    max-width: 46ch;
+    padding-inline: var(--content-pad);
   }
 
   .hero-cover-frame--static {
