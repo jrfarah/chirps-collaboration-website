@@ -30,7 +30,7 @@
       <a class="site-nav__brand" href="#top">CHIRP</a>
       <div class="site-nav__links">
         <a href="#story">Story</a>
-        <a href="#goals">Goals</a>
+        <a href="#goals">Why</a>
         <a href="#measure">Measure</a>
         <a href="#roadmap">Roadmap</a>
         <a href="#team">Team</a>
@@ -47,7 +47,7 @@
   <nav class="section-rail" data-section-rail aria-label="Jump to section">
     <a class="section-rail__link" href="#top" data-section-rail-link="top">Home</a>
     <a class="section-rail__link" href="#story" data-section-rail-link="story">Story</a>
-    <a class="section-rail__link" href="#goals" data-section-rail-link="goals">Goals</a>
+    <a class="section-rail__link" href="#goals" data-section-rail-link="goals">Why</a>
     <a class="section-rail__link" href="#measure" data-section-rail-link="measure">Measure</a>
     <a class="section-rail__link" href="#roadmap" data-section-rail-link="roadmap">Roadmap</a>
     <a class="section-rail__link" href="#team" data-section-rail-link="team">Team</a>
@@ -132,17 +132,11 @@
              alt="Nature magazine cover, 12 March 2026: “Power Sourced — the extreme physics at the heart of superluminous supernovae,” featuring the SN 2024afav accretion disk and relativistic jet." />
       </div>
 
-      <div class="hero-frame-bar hero-frame-bar--left" data-hero-bar="left"></div>
-      <div class="hero-frame-bar hero-frame-bar--right" data-hero-bar="right"></div>
-      <div class="hero-frame-bar hero-frame-bar--top" data-hero-bar="top"></div>
-      <div class="hero-frame-bar hero-frame-bar--bottom" data-hero-bar="bottom"></div>
-
-      <!-- Rounds the window the bars leave open, to match
-           cover_nature.png's own corner radius — see hero.css. -->
-      <div class="hero-frame-corner hero-frame-corner--tl" data-hero-corner="tl"></div>
-      <div class="hero-frame-corner hero-frame-corner--tr" data-hero-corner="tr"></div>
-      <div class="hero-frame-corner hero-frame-corner--bl" data-hero-corner="bl"></div>
-      <div class="hero-frame-corner hero-frame-corner--br" data-hero-corner="br"></div>
+      <!-- The cover's trim edge, drawn as a hairline wireframe rather
+           than masked out with opaque margins — the scene and its dust
+           stay visible all the way to the viewport edge, right through
+           the cover reveal and on into the sections below. -->
+      <div class="hero-frame-outline" data-hero-frame></div>
 
       <div class="hero-copy" data-hero-copy>
         <h1 class="hero-title">The new CHIRPS collaboration.</h1>
@@ -218,6 +212,7 @@
 
     <section id="goals" class="section-goals">
       <div class="content">
+        <p class="section-lead">Why we care</p>
         <ol class="goal-list">
           <li class="goal-card">
             <span class="goal-card__index">01</span>

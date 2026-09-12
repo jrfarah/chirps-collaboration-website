@@ -81,15 +81,14 @@
                                     inside the SAME .hero-engine group,
                                     not a separate top-level element —
                                     see hero.js for why)
-        .hero-frame-bar × 4    margins that close in to the cover's
-                                trim size, concurrent with the overlay
-                                — then fade out again (opacity only,
-                                never re-open) once the crossfade below
-                                has fully held, so the exiting cover has
-                                no opaque margins around it
-        .hero-frame-corner × 4 rounds that window's corners, same
-                                radius as .hero-layer--nature above;
-                                fades out alongside the bars, same tween
+        .hero-frame-outline    a hairline white wireframe on the
+                                cover's trim rectangle, drawn concurrent
+                                with the overlay and faded out again
+                                once the crossfade has held. Replaces
+                                four opaque closing bars + four corner
+                                patches: nothing is masked out, so the
+                                background and dust stay visible to the
+                                viewport edge right through the reveal
         .hero-copy             title / dek
         .hero-statements       three Beat-2 captions, shown one at a
                                 time between the title's exit and the
@@ -137,7 +136,7 @@
 
   /* The leftover margin outside that frame on each axis — shared by
      the closing bars AND the four corner-rounding patches below, so
-     the patches can never drift out of alignment with the bars. */
+     the frame wireframe sits exactly on that rectangle. */
   --frame-margin-x: calc((100vw - var(--frame-w)) / 2);
   --frame-margin-y: calc((100vh - var(--frame-h)) / 2);
 }
@@ -381,77 +380,32 @@
 }
 
 /* ---------------------------------------------------------------
-   Closing margins — solid bars that slide in from each edge via
-   transform only (scale from the outer edge), never resized live.
+   The cover's trim edge, as a hairline wireframe.
+
+   This replaces what used to be four opaque --bg bars closing in from
+   the viewport edges (plus four radial-gradient patches to round the
+   window they left). That version cropped to the cover by painting
+   everything outside it black, which killed the scene: the dust and
+   background vanished behind solid margins exactly at the moment the
+   page transitions into the sections below, and the cover read as a
+   cut rather than as part of one continuous scene. Drawing only the
+   border — at precisely the rectangle those bars used to define, same
+   --frame-margin-* insets, same --radius-cover corners — keeps the
+   whole backdrop live edge to edge while still registering the trim.
+   One element instead of eight, and the corner rounding is now just
+   border-radius rather than four gradient patches.
 ------------------------------------------------------------------ */
-.hero-frame-bar {
+.hero-frame-outline {
   position: absolute;
-  background: var(--bg);
-  will-change: transform;
-}
-
-.hero-frame-bar--left,
-.hero-frame-bar--right {
-  top: 0;
-  height: 100vh;
-  width: var(--frame-margin-x);
-  transform: scaleX(0);
-}
-.hero-frame-bar--left   { left: 0;  transform-origin: left center; }
-.hero-frame-bar--right  { right: 0; transform-origin: right center; }
-
-.hero-frame-bar--top,
-.hero-frame-bar--bottom {
-  left: 0;
-  width: 100vw;
-  height: var(--frame-margin-y);
-  transform: scaleY(0);
-}
-.hero-frame-bar--top    { top: 0;    transform-origin: top center; }
-.hero-frame-bar--bottom { bottom: 0; transform-origin: bottom center; }
-
-/* ---------------------------------------------------------------
-   Corner rounding for the window the bars leave open. The bars
-   themselves can't do this — each is a plain rectangle, and the
-   window's actual corner point sits in the middle of a bar's edge
-   (inset by the OTHER axis's margin), not at that bar's own corner,
-   so a border-radius on a bar rounds the wrong point entirely. These
-   four small patches sit right on top of the bars at each of the
-   window's true corners; each is a radial-gradient that's --bg
-   outside a quarter-circle of radius --radius-cover and transparent
-   inside it, centered on the point --radius-cover in from the
-   corner — the standard "round a rectangular cutout" trick. Same
-   radius as .hero-layer--nature, so the live-scene window and the
-   printed cover it dissolves into read as the same frame. Fixed in
-   place (margins are constant); hero.js only fades their opacity in,
-   alongside the bars.
------------------------------------------------------------------- */
-.hero-frame-corner {
-  position: absolute;
-  width: var(--radius-cover);
-  height: var(--radius-cover);
-  opacity: 0;
-  will-change: opacity;
-}
-.hero-frame-corner--tl {
   left: var(--frame-margin-x);
-  top: var(--frame-margin-y);
-  background: radial-gradient(circle at 100% 100%, transparent var(--radius-cover), var(--bg) var(--radius-cover));
-}
-.hero-frame-corner--tr {
   right: var(--frame-margin-x);
   top: var(--frame-margin-y);
-  background: radial-gradient(circle at 0% 100%, transparent var(--radius-cover), var(--bg) var(--radius-cover));
-}
-.hero-frame-corner--bl {
-  left: var(--frame-margin-x);
   bottom: var(--frame-margin-y);
-  background: radial-gradient(circle at 100% 0%, transparent var(--radius-cover), var(--bg) var(--radius-cover));
-}
-.hero-frame-corner--br {
-  right: var(--frame-margin-x);
-  bottom: var(--frame-margin-y);
-  background: radial-gradient(circle at 0% 0%, transparent var(--radius-cover), var(--bg) var(--radius-cover));
+  border: 1px solid var(--text-bright, #fff);
+  border-radius: var(--radius-cover);
+  opacity: 0; /* GSAP-driven, Beat 3 */
+  pointer-events: none;
+  will-change: transform, opacity;
 }
 
 /* ---------------------------------------------------------------

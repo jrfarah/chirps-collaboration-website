@@ -239,13 +239,7 @@ export async function initHero() {
   const scrollcue = hero.querySelector('[data-hero-scrollcue]');
   const caption = hero.querySelector('[data-hero-caption]');
   const statements = Array.from(hero.querySelectorAll('[data-hero-statement]'));
-  const bars = {
-    left: hero.querySelector('[data-hero-bar="left"]'),
-    right: hero.querySelector('[data-hero-bar="right"]'),
-    top: hero.querySelector('[data-hero-bar="top"]'),
-    bottom: hero.querySelector('[data-hero-bar="bottom"]'),
-  };
-  const corners = Array.from(hero.querySelectorAll('[data-hero-corner]'));
+  const frameOutline = hero.querySelector('[data-hero-frame]');
 
   await preloadLayers(hero);
   pin.classList.add('is-ready');
@@ -291,12 +285,20 @@ export async function initHero() {
   // the old, larger, hero-tuned magnitudes across a scroll distance
   // ~1.9× the hero's own was what made every wisp fully exit the
   // frame well before the page bottom.
+  // Raised ~1.5x when the hero track grew to 700vh. These are spread
+  // across the whole page, so a longer page meant less dust movement
+  // per unit of scroll — the scene got quieter exactly as the hero got
+  // longer, which is a large part of why the first scrolls stopped
+  // feeling like anything was responding. The wisps are mask-feathered
+  // (hero.css) so there's no edge to expose by moving them further,
+  // and bg's own scale-up is derived from `stage` below, so raising
+  // that stays edge-safe automatically.
   const SCENE_DRIFT = {
-    stage: 6,
-    haze1: { x: -62, y: 80 },
-    haze2: { x: 66, y: 92 },
-    haze3: { x: 56, y: -72 },
-    haze4: { x: -70, y: -88 },
+    stage: 9,
+    haze1: { x: -93, y: 120 },
+    haze2: { x: 99, y: 138 },
+    haze3: { x: 84, y: -108 },
+    haze4: { x: -105, y: -132 },
   };
 
   /**
@@ -404,9 +406,10 @@ export async function initHero() {
     // transform for free. Opacity is the only thing this element
     // ever needs from JS.
     gsapLib.set(natureCover, { opacity: 0 });
-    gsapLib.set([bars.left, bars.right], { scaleX: 0 });
-    gsapLib.set([bars.top, bars.bottom], { scaleY: 0 });
-    gsapLib.set(corners, { opacity: 0 });
+    // Starts a touch oversized and settles onto the trim line, which
+    // reads as the frame closing in the way the old bars did — without
+    // anything opaque ever covering the scene.
+    gsapLib.set(frameOutline, { opacity: 0, scale: 1.04 });
     gsapLib.set(copy, { opacity: 1, yPercent: 0 });
     gsapLib.set(caption, { opacity: 0, yPercent: 4 });
     gsapLib.set(statements, { opacity: 0, yPercent: 4 });
@@ -423,12 +426,16 @@ export async function initHero() {
     // invisible. Hence both the longer track and the much larger
     // fractions below.
     //
-    // Title holds fully visible AND perfectly static for 0.13 (~78vh —
-    // most of a screen of scrolling) before anything happens to it.
-    // Then the lift leads the fade: it travels for 0.04 at full
-    // opacity before the fade even starts, so it reads as being
-    // carried up and out through the top of the frame rather than
-    // dissolving on the spot the instant you touch the wheel.
+    // The title's exit in two stages, because a dead hold and a fast
+    // exit are both wrong on their own. Stage one starts on the very
+    // first pixel of scroll but is deliberately slow — 6% of a
+    // viewport spread over 0.13 of the track — so the page answers
+    // immediately without the title actually going anywhere yet.
+    // Stage two is the real departure: the remaining travel in a third
+    // of the time, with the fade only catching up at the end. Without
+    // stage one the first ~560px of scrolling did nothing at all and
+    // then the title appeared to shoot off with no warning.
+    tl.to(copy, { yPercent: -6, duration: 0.13 }, 0);
     tl.to(copy, { yPercent: -70, duration: 0.08 }, 0.13);
     tl.to(copy, { opacity: 0, duration: 0.04 }, 0.17);
     tl.to(scrollcue, { opacity: 0, duration: 0.04 }, 0);
@@ -473,9 +480,7 @@ export async function initHero() {
     // from the longer track went to the text above.
     tl.to(engine, { scale: 1, duration: 0.089 }, 0.755);
     tl.to(overlay, { opacity: 1, scale: 1, duration: 0.089 }, 0.755);
-    tl.to([bars.left, bars.right], { scaleX: 1, duration: 0.089 }, 0.755);
-    tl.to([bars.top, bars.bottom], { scaleY: 1, duration: 0.089 }, 0.755);
-    tl.to(corners, { opacity: 1, duration: 0.089 }, 0.755);
+    tl.to(frameOutline, { opacity: 1, scale: 1, duration: 0.089 }, 0.755);
     tl.to(caption, { opacity: 1, yPercent: 0, duration: 0.045 }, 0.80);
 
     // Beat 3b — tail crossfade: only once assembly (above) is done,
@@ -513,7 +518,7 @@ export async function initHero() {
     // that's left has no opaque margins around it as it scrolls off:
     // just the same continuous .bg-fixed scene the rest of the page
     // sits on, not a black-bordered box cutting to it.
-    tl.to([bars.left, bars.right, bars.top, bars.bottom, ...corners], { opacity: 0, duration: 0.067 }, 0.933);
+    tl.to(frameOutline, { opacity: 0, duration: 0.067 }, 0.933);
 
     st = ScrollTrigger.create({
       id: 'hero-main',
