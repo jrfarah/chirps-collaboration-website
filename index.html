@@ -39,7 +39,22 @@
     </div>
   </nav>
 
-  <section class="hero" data-hero>
+  <!-- Section-jump rail — fades in alongside .site-nav (same reveal
+       point, js/sectionNav.js) and tracks the currently-in-view
+       section via IntersectionObserver, brightening that one link and
+       dimming the rest. Every section is always clickable, including
+       back up to Home. -->
+  <nav class="section-rail" data-section-rail aria-label="Jump to section">
+    <a class="section-rail__link" href="#top" data-section-rail-link="top">Home</a>
+    <a class="section-rail__link" href="#story" data-section-rail-link="story">Story</a>
+    <a class="section-rail__link" href="#goals" data-section-rail-link="goals">Goals</a>
+    <a class="section-rail__link" href="#measure" data-section-rail-link="measure">Measure</a>
+    <a class="section-rail__link" href="#roadmap" data-section-rail-link="roadmap">Roadmap</a>
+    <a class="section-rail__link" href="#team" data-section-rail-link="team">Team</a>
+    <a class="section-rail__link" href="#coverage" data-section-rail-link="coverage">Coverage</a>
+  </nav>
+
+  <section class="hero" data-hero id="top">
     <!-- The persistent backdrop: bg_environment + the four dust/haze
          layers, fixed to the viewport and behind everything on the
          page, hero through footer. ONE continuous ScrollTrigger
@@ -253,7 +268,7 @@
           </div>
 
           <div class="measure-controls">
-            <div class="measure-slider">
+            <div class="measure-slider" data-measure-slider="P">
               <div class="measure-slider__head">
                 <label class="measure-slider__label" for="measure-input-p">Spin period (P)</label>
                 <span class="measure-slider__value"><span data-measure-value="P">—</span><span class="measure-slider__unit">ms</span></span>
@@ -262,7 +277,7 @@
               <p class="measure-slider__guide">How fast the newborn magnetar rotates.</p>
             </div>
 
-            <div class="measure-slider">
+            <div class="measure-slider" data-measure-slider="B">
               <div class="measure-slider__head">
                 <label class="measure-slider__label" for="measure-input-b">Magnetic field (B)</label>
                 <span class="measure-slider__value"><span data-measure-value="B">—</span><span class="measure-slider__unit">×10¹⁴ G</span></span>
@@ -273,7 +288,7 @@
 
             <div class="measure-fit">
               <div class="measure-fit__head">
-                <span class="measure-fit__label">χ²</span>
+                <span class="measure-fit__label">Reduced χ²</span>
                 <span class="measure-fit__value" data-measure-chi2>—</span>
               </div>
               <div class="measure-fit__bar"><span class="measure-fit__bar-fill" data-measure-fit-bar></span></div>

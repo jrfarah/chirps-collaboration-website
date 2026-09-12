@@ -413,9 +413,25 @@ export async function initHero() {
 
     tl = gsapLib.timeline({ defaults: { ease: 'none' } });
 
-    // Title lifts away early. One direction: fading, lifting.
-    tl.to(copy, { yPercent: -25, opacity: 0, duration: 0.15 }, 0);
-    tl.to(scrollcue, { opacity: 0, duration: 0.08 }, 0);
+    // NOTE ON THE SCALE OF THESE NUMBERS: every position/duration below
+    // is a fraction of the WHOLE hero scroll (the timeline's total
+    // duration is exactly 1.0 by construction — the last tween ends at
+    // 1.0). .hero is 700vh, so the pinned sequence spans 600vh of
+    // actual scrolling and 0.01 here == 6vh of scroll. An earlier pass
+    // at "make the text linger" moved the title's exit from 0.15 to
+    // 0.18 of a 1.35-long timeline — about 60px of extra scroll, i.e.
+    // invisible. Hence both the longer track and the much larger
+    // fractions below.
+    //
+    // Title holds fully visible AND perfectly static for 0.13 (~78vh —
+    // most of a screen of scrolling) before anything happens to it.
+    // Then the lift leads the fade: it travels for 0.04 at full
+    // opacity before the fade even starts, so it reads as being
+    // carried up and out through the top of the frame rather than
+    // dissolving on the spot the instant you touch the wheel.
+    tl.to(copy, { yPercent: -70, duration: 0.08 }, 0.13);
+    tl.to(copy, { opacity: 0, duration: 0.04 }, 0.17);
+    tl.to(scrollcue, { opacity: 0, duration: 0.04 }, 0);
 
     // The object: perfectly still position-wise across the whole
     // scroll (set once, above — no tween here at all) — its SIZE also
@@ -423,18 +439,22 @@ export async function initHero() {
     // which is what actually reads as "still" while the dust flies
     // (the dust itself is entirely handled by buildSceneDrift now).
 
-    // Beat 2 statements — three captions, one at a time, evenly spaced
-    // between the title's exit (done by 0.15) and the assembly window
-    // opening (0.8): each gets an identical 0.03 fade-in / 0.09 hold /
-    // 0.03 fade-out (0.15 total), with a 0.05 gap on every side, so
-    // none overlap and the last is back at opacity 0 a full 0.05 of
-    // scroll before the cover overlay/bars begin.
-    tl.to(statements[0], { opacity: 1, yPercent: 0, duration: 0.03 }, 0.20);
-    tl.to(statements[0], { opacity: 0, duration: 0.03 }, 0.32);
-    tl.to(statements[1], { opacity: 1, yPercent: 0, duration: 0.03 }, 0.40);
-    tl.to(statements[1], { opacity: 0, duration: 0.03 }, 0.52);
-    tl.to(statements[2], { opacity: 1, yPercent: 0, duration: 0.03 }, 0.60);
-    tl.to(statements[2], { opacity: 0, duration: 0.03 }, 0.72);
+    // Beat 2 statements — three captions, one at a time, filling the
+    // gap between the title's exit (0.21) and the assembly window
+    // (0.755). Each gets a 0.17 window: 0.02 to fade in, 0.10 of
+    // dead-still full-opacity hold (~60vh of scrolling — you can stop
+    // reading, scroll a little, and it's still there), then the same
+    // lift-leads-the-fade exit as the title (drift starts at +0.12,
+    // opacity doesn't begin dropping until +0.13).
+    tl.to(statements[0], { opacity: 1, yPercent: 0, duration: 0.02 }, 0.225);
+    tl.to(statements[0], { yPercent: -10, duration: 0.05 }, 0.345);
+    tl.to(statements[0], { opacity: 0, duration: 0.04 }, 0.355);
+    tl.to(statements[1], { opacity: 1, yPercent: 0, duration: 0.02 }, 0.40);
+    tl.to(statements[1], { yPercent: -10, duration: 0.05 }, 0.52);
+    tl.to(statements[1], { opacity: 0, duration: 0.04 }, 0.53);
+    tl.to(statements[2], { opacity: 1, yPercent: 0, duration: 0.02 }, 0.575);
+    tl.to(statements[2], { yPercent: -10, duration: 0.05 }, 0.695);
+    tl.to(statements[2], { opacity: 0, duration: 0.04 }, 0.705);
 
     // Beat 3a — assembly: the real Nature text settles onto the
     // still-live engine, the engine eases from its Beat-1 scale-up
@@ -444,12 +464,19 @@ export async function initHero() {
     // this window (rather than spreading it across the whole scroll)
     // is what keeps it feeling anchored during Beat 2 instead of
     // continuously zooming — the one moment it resizes is here.
-    tl.to(engine, { scale: 1, duration: 0.2 }, 0.8);
-    tl.to(overlay, { opacity: 1, scale: 1, duration: 0.2 }, 0.8);
-    tl.to([bars.left, bars.right], { scaleX: 1, duration: 0.2 }, 0.8);
-    tl.to([bars.top, bars.bottom], { scaleY: 1, duration: 0.2 }, 0.8);
-    tl.to(corners, { opacity: 1, duration: 0.2 }, 0.8);
-    tl.to(caption, { opacity: 1, yPercent: 0, duration: 0.1 }, 0.9);
+    // These four positions/durations are the OLD Beat-3 numbers
+    // (0.8/0.9/1.0/1.20 on a 1.35-long timeline) rescaled onto
+    // 0.755→1.0 of the new, longer track. That rescale is deliberate:
+    // it keeps the cover assembly and resolve at almost exactly the
+    // same ABSOLUTE scroll distance (~147vh) they had before, so the
+    // part that already felt right is untouched — all the extra room
+    // from the longer track went to the text above.
+    tl.to(engine, { scale: 1, duration: 0.089 }, 0.755);
+    tl.to(overlay, { opacity: 1, scale: 1, duration: 0.089 }, 0.755);
+    tl.to([bars.left, bars.right], { scaleX: 1, duration: 0.089 }, 0.755);
+    tl.to([bars.top, bars.bottom], { scaleY: 1, duration: 0.089 }, 0.755);
+    tl.to(corners, { opacity: 1, duration: 0.089 }, 0.755);
+    tl.to(caption, { opacity: 1, yPercent: 0, duration: 0.045 }, 0.80);
 
     // Beat 3b — tail crossfade: only once assembly (above) is done,
     // the live artwork dissolves into the real cover_nature.png.
@@ -474,8 +501,8 @@ export async function initHero() {
     // same pixels), never dipping to invisible (overlay's copy is
     // always there) — only the artwork around/behind it (liveArt)
     // resolves from live scene to flat print.
-    tl.to(liveArt, { opacity: 0, duration: 0.15 }, 1.0);
-    tl.to(natureCover, { opacity: 1, duration: 0.15 }, 1.0);
+    tl.to(liveArt, { opacity: 0, duration: 0.067 }, 0.844);
+    tl.to(natureCover, { opacity: 1, duration: 0.067 }, 0.844);
 
     // Beat 3c — tail exit: the resolve holds fully framed from 1.15 to
     // 1.20 (a deliberate pause before anything else moves — the
@@ -486,7 +513,7 @@ export async function initHero() {
     // that's left has no opaque margins around it as it scrolls off:
     // just the same continuous .bg-fixed scene the rest of the page
     // sits on, not a black-bordered box cutting to it.
-    tl.to([bars.left, bars.right, bars.top, bars.bottom, ...corners], { opacity: 0, duration: 0.15 }, 1.20);
+    tl.to([bars.left, bars.right, bars.top, bars.bottom, ...corners], { opacity: 0, duration: 0.067 }, 0.933);
 
     st = ScrollTrigger.create({
       id: 'hero-main',

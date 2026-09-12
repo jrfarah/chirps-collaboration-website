@@ -14,6 +14,15 @@ html {
   color-scheme: dark;
 }
 
+/* Anchor jumps (nav, section-rail) glide rather than snap — gated
+   behind no-preference so reduced-motion users get the instant jump
+   instead. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 body {
   margin: 0;
   background: var(--bg);

@@ -28,13 +28,19 @@
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--duration-base) var(--ease-weighty),
-              background var(--duration-base) var(--ease-weighty);
+              background var(--duration-base) var(--ease-weighty),
+              backdrop-filter var(--duration-base) var(--ease-weighty);
 }
 
 .site-nav.is-visible {
   opacity: 1;
   pointer-events: auto;
   background: var(--scrim);
+  /* Blurs whatever's scrolling behind the whole bar (dust, text
+     passing underneath), not just a darker strip — that's what
+     actually keeps the nav links reading clearly over busy content. */
+  backdrop-filter: blur(9px);
+  -webkit-backdrop-filter: blur(9px);
 }
 
 .site-nav__inner {
@@ -63,6 +69,78 @@
 }
 
 /* ---------------------------------------------------------------
+   Section-jump rail — a second, independent nav: every section
+   always listed and always clickable, with only the currently-in-
+   view one brightened (js/sectionNav.js, IntersectionObserver-driven)
+   and the rest dimmed to --text-faint. Reveals on the same trigger as
+   .site-nav (past the hero) but is its own ScrollTrigger, so the two
+   stay decoupled. Desktop only — a persistent right-edge column has
+   no good answer on a narrow viewport that doesn't cost more width
+   than it's worth, so it's simply absent there; .site-nav's own links
+   already cover the same ground on mobile.
+------------------------------------------------------------------ */
+.section-rail {
+  position: fixed;
+  top: 50%;
+  right: var(--space-4);
+  z-index: 9;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-3);
+  transform: translateY(-50%);
+}
+
+.section-rail__link {
+  font-size: var(--step--1);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-faint);
+  transition: color var(--duration-fast) var(--ease-weighty);
+}
+
+/* Entrance — each link drifts in from the right, one after another.
+   Visible/settled is the element's NORMAL state and the keyframes only
+   animate toward it, so a browser that skips the animation entirely
+   still shows a complete, usable rail (the same reason the hero title
+   is white by default). animation-fill-mode: both is what holds each
+   link hidden through its own stagger delay. */
+@media (prefers-reduced-motion: no-preference) {
+  .section-rail__link {
+    animation: section-rail-in var(--duration-base) var(--ease-weighty) both;
+  }
+
+  .section-rail__link:nth-child(1) { animation-delay: 0.30s; }
+  .section-rail__link:nth-child(2) { animation-delay: 0.36s; }
+  .section-rail__link:nth-child(3) { animation-delay: 0.42s; }
+  .section-rail__link:nth-child(4) { animation-delay: 0.48s; }
+  .section-rail__link:nth-child(5) { animation-delay: 0.54s; }
+  .section-rail__link:nth-child(6) { animation-delay: 0.60s; }
+  .section-rail__link:nth-child(7) { animation-delay: 0.66s; }
+}
+
+@keyframes section-rail-in {
+  from { opacity: 0; transform: translateX(var(--space-3)); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.section-rail__link:hover,
+.section-rail__link:focus-visible {
+  color: var(--accent);
+}
+
+.section-rail__link.is-active {
+  color: var(--text-bright);
+}
+
+@media (max-width: 900px) {
+  .section-rail {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------
    Section 1 — intro prose. A centered, narrower-than-usual column
    (not the full 68ch .content measure), left-aligned within that
    column (centering the paragraphs themselves, at this length, would
@@ -85,6 +163,8 @@
   font-weight: var(--weight-light);
   line-height: var(--leading-normal);
   color: var(--text);
+  /* Scroll-driven lift/fade lives in js/storyDrift.js. */
+  will-change: transform, opacity;
 }
 
 .section-intro__lede + .section-intro__lede {
@@ -220,25 +300,56 @@
   color: var(--text-faint);
 }
 
+/* ONE grid for all three columns, not three independent stacks. The
+   two sliders and the fit readout put their children directly into
+   this grid (display:contents on the wrappers), so "label row",
+   "control row" and "caption row" are shared row TRACKS — the labels
+   sit on one baseline and the two slider tracks and the chi2 bar are
+   on one line, by construction, no matter how much taller the chi2
+   numeral is than a slider's value. (The previous attempt matched the
+   two rows' heights with a min-height, which lined the bars up but
+   left the label row ragged, since each column was still its own
+   independent stack.) */
 .measure-controls {
   display: grid;
   grid-template-columns: repeat(2, 1fr) minmax(14rem, 1fr);
-  gap: var(--space-6);
-  align-items: start;
+  column-gap: var(--space-6);
+  row-gap: var(--space-3);
 }
 
-.measure-slider {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
+.measure-slider,
+.measure-fit {
+  display: contents;
 }
 
-.measure-slider__head {
+[data-measure-slider="P"] > * { grid-column: 1; }
+[data-measure-slider="B"] > * { grid-column: 2; }
+.measure-fit > * { grid-column: 3; }
+
+/* Row 1 — the labels. Baseline-aligned across all three columns, so
+   "Spin period (P)", "Magnetic field (B)" and the chi2 label all sit
+   on the same line even though the chi2 readout beside them is set
+   several steps larger. */
+.measure-slider__head,
+.measure-fit__head {
+  grid-row: 1;
+  align-self: baseline;
   display: flex;
   justify-content: space-between;
   align-items: baseline;
   gap: var(--space-2);
 }
+
+/* Row 2 — the controls. The bar is centred in the track so its line
+   lands on the slider tracks' line rather than its top edge. */
+.measure-range { grid-row: 2; align-self: center; }
+.measure-fit__bar { grid-row: 2; align-self: center; }
+
+/* Row 3 — the small print under each control. Row 4 is the button,
+   which only column 3 has. */
+.measure-slider__guide,
+.measure-fit__hint { grid-row: 3; }
+.measure-snap { grid-row: 4; }
 
 .measure-slider__label {
   font-size: var(--step-0);
@@ -345,18 +456,6 @@
   box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--line-raised);
 }
 
-.measure-fit {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.measure-fit__head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-}
-
 .measure-fit__label {
   font-size: var(--step--1);
   font-weight: var(--weight-medium);
@@ -369,6 +468,10 @@
   font-size: var(--step-2);
   font-weight: var(--weight-medium);
   color: var(--text);
+  /* Tamed from the inherited body line-height (1.6, meant for prose)
+     so this large numeral doesn't inflate .measure-fit__head taller
+     than the shared min-height above — glyph-height only. */
+  line-height: 1;
 }
 
 .measure-fit__bar {
@@ -402,7 +505,10 @@
 }
 
 .measure-snap {
-  align-self: flex-start;
+  align-self: start;
+  /* Grid item now (see .measure-controls) — without this it would
+     stretch to the full column width instead of hugging its label. */
+  justify-self: start;
   margin-top: var(--space-1);
   padding: var(--space-2) var(--space-4);
   border: 1px solid var(--line-raised);
@@ -428,8 +534,36 @@
 }
 
 @media (max-width: 700px) {
+  /* One column: the three groups go back to being their own stacks,
+     since there are no longer sibling columns to align rows against
+     (and a shared 4-row grid would interleave them). */
   .measure-controls {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+  }
+
+  .measure-slider,
+  .measure-fit {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  [data-measure-slider="P"] > *,
+  [data-measure-slider="B"] > *,
+  .measure-fit > * {
+    grid-column: auto;
+  }
+
+  .measure-slider__head,
+  .measure-fit__head,
+  .measure-range,
+  .measure-fit__bar,
+  .measure-slider__guide,
+  .measure-fit__hint,
+  .measure-snap {
+    grid-row: auto;
   }
 
   .measure-plot {

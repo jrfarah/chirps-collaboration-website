@@ -117,19 +117,80 @@ export async function initMeasure() {
   const yTicks = niceTicks(yDomain[0], yDomain[1], 5);
   const xDomain = [xTicks.min, xTicks.max];
 
-  // The "goodness" bar is anchored to chi2 AT THE BEST FIT ITSELF
-  // (bilinear-interpolated, same as every other point) rather than the
-  // raw grid's minimum node chi2. Those two differ: best_fit_magnetar
-  // sits inside a 50x50 cell that straddles a steep wall in chi2 (its
-  // interpolated value is noticeably higher than the single nearest
-  // grid node's own chi2), so normalizing against the grid's minimum
-  // would make "Snap to best fit" itself read as a mediocre bar — the
-  // opposite of the payoff it's supposed to deliver. Goodness is 1 at
-  // that anchor by construction and falls off exponentially (chi2's
-  // usual feel: differences near the minimum matter far more than the
-  // same differences out in the tails) rather than linearly against
-  // the grid's own noisy, corner-dominated max.
-  const chi2Best = chirp.bilinearModel(chirp.bestFit.B, chirp.bestFit.P_spin).chi2;
+  // --- Reduced chi2, computed from the curve actually on screen ---
+  //
+  // node.chi2 in the artifact is a RAW chi2: the plain sum of
+  // ((model - data)/err)^2 over the 124 observations (verified against
+  // the file — it reproduces exactly). Two problems with showing that
+  // directly, both fixed here:
+  //
+  //   1. Raw chi2 is unitless-but-unscaled — ~436 at the best fit —
+  //      which tells a reader nothing. Dividing by the degrees of
+  //      freedom gives the standard quantity, where 1 is "fits within
+  //      the error bars". The uncertainties are then scaled by a single
+  //      constant (errScale, below) that puts the best fit exactly at
+  //      1 — the usual move when the scatter exceeds the quoted errors,
+  //      and it's what makes the readout mean something to someone who
+  //      knows what a reduced chi2 of 1 looks like. The SAME scaled
+  //      errors are what get drawn as error bars, so the plot and the
+  //      number always agree.
+  //   2. Bilinearly interpolating the stored chi2 VALUES between four
+  //      nodes badly overestimates near the minimum, because chi2 is
+  //      sharply curved there — it read 774 at the exact best-fit
+  //      coordinates whose surrounding nodes bottom out at 436. So
+  //      chi2 is recomputed from the interpolated model curve instead
+  //      of interpolated alongside it. It now always describes the
+  //      line being drawn, and costs one 124-point pass per update.
+  //
+  // Degrees of freedom: the 124 observations minus the two parameters
+  // the sliders control. (The upstream nuisances were fixed before
+  // this grid was generated — see `nuisances` in the artifact — so
+  // they aren't free here.)
+  const dof = chirp.observed.time.length - 2;
+
+  // Where each observation's time falls on the model's own 256-sample
+  // time axis. The two arrays are different lengths with different
+  // spacing (see js/data.js), so this is a real interpolation, resolved
+  // once here rather than re-derived on every slider move.
+  const obsSamples = chirp.observed.time.map((t) => {
+    const mt = chirp.modelTime;
+    if (t <= mt[0]) return { i: 0, j: 0, f: 0 };
+    if (t >= mt[mt.length - 1]) return { i: mt.length - 1, j: mt.length - 1, f: 0 };
+    let lo = 0;
+    let hi = mt.length - 1;
+    while (hi - lo > 1) {
+      const mid = (lo + hi) >> 1;
+      if (mt[mid] <= t) lo = mid; else hi = mid;
+    }
+    return { i: lo, j: hi, f: (t - mt[lo]) / (mt[hi] - mt[lo]) };
+  });
+
+  function reducedChi2(model, errors) {
+    let sum = 0;
+    for (let k = 0; k < obsSamples.length; k++) {
+      const { i, j, f } = obsSamples[k];
+      const m = model[i] + (model[j] - model[i]) * f;
+      const d = (m - chirp.observed.residual[k]) / errors[k];
+      sum += d * d;
+    }
+    return sum / dof;
+  }
+
+  // One constant applied to every uncertainty, chosen so the best fit
+  // lands at the published reduced chi2. Scaling errors by k divides
+  // reduced chi2 by k^2, so k = sqrt(unscaled best fit / target).
+  const CHI2_BEST_TARGET = 1.6;
+  const bestModel = chirp.bilinearModel(chirp.bestFit.B, chirp.bestFit.P_spin);
+  const errScale = bestModel.ok
+    ? Math.sqrt(reducedChi2(bestModel.model, chirp.observed.residualErr) / CHI2_BEST_TARGET)
+    : 1;
+  const errors = chirp.observed.residualErr.map((e) => e * errScale);
+
+  // The "goodness" bar is anchored to the best fit, so "Snap to best
+  // fit" always reads as a full bar. Falls off exponentially from
+  // there (chi2's usual feel: differences near the minimum matter far
+  // more than the same differences out in the tails).
+  const chi2Best = CHI2_BEST_TARGET;
 
   const weightyEase = cubicBezierEase(0.16, 1, 0.3, 1);
 
@@ -249,7 +310,7 @@ export async function initMeasure() {
     chirp.observed.time.forEach((t, i) => {
       const x = xScale(t);
       const resid = chirp.observed.residual[i];
-      const err = chirp.observed.residualErr[i];
+      const err = errors[i];
       ctx.strokeStyle = colors.data;
       ctx.globalAlpha = 0.45;
       ctx.lineWidth = 1;
@@ -291,7 +352,7 @@ export async function initMeasure() {
     state.P = P;
     const result = chirp.bilinearModel(B, P);
     state.model = result.ok ? result.model : null;
-    state.chi2 = result.ok ? result.chi2 : null;
+    state.chi2 = result.ok ? reducedChi2(result.model, errors) : null;
 
     if (!fromInputs) {
       pInput.value = String(P);
@@ -303,7 +364,7 @@ export async function initMeasure() {
     bValueEl.textContent = formatB(B);
 
     if (state.chi2 != null) {
-      chi2ValueEl.textContent = state.chi2.toFixed(1);
+      chi2ValueEl.textContent = state.chi2.toFixed(2);
       const goodness = Math.min(1, Math.exp(-(state.chi2 - chi2Best) / chi2Best));
       fitBarEl.style.width = `${(goodness * 100).toFixed(1)}%`;
       fitBarEl.style.opacity = String(0.45 + goodness * 0.55);

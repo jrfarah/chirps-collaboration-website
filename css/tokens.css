@@ -23,6 +23,12 @@
   --text: #ece6df;            /* warm bone white — primary text */
   --text-dim: #948b81;        /* muted warm grey — secondary text, captions */
   --text-faint: #5c554d;      /* lowest-emphasis text, disabled states */
+  --text-bright: #ffffff;     /* true white — the hero title only, and
+                                  only once it's brightened in (see
+                                  .hero-title, hero.css); pure white
+                                  reads distinctly brighter than --text
+                                  against the busy scene behind it,
+                                  which is the point at that one size */
 
   --accent: #9db8d8;          /* cold blue-white of the jet — restrained use */
   --accent-warm: #a56b6b;     /* dusty rust/mauve of the disk — secondary */
