@@ -392,6 +392,8 @@ export async function initHero() {
   // layout. Does NOT touch stage/bg/haze — see buildSceneDrift.
   let st = null;
   let tl = null;
+  // The cover resolve — timed, not scrubbed. See where it's built.
+  let coverTl = null;
 
   function buildScrollSequence() {
     const k1 = computeEngineStartScale();
@@ -483,42 +485,47 @@ export async function initHero() {
     tl.to(frameOutline, { opacity: 1, scale: 1, duration: 0.089 }, 0.755);
     tl.to(caption, { opacity: 1, yPercent: 0, duration: 0.045 }, 0.80);
 
-    // Beat 3b — tail crossfade: only once assembly (above) is done,
-    // the live artwork dissolves into the real cover_nature.png.
-    // Positioned at timeline time 1.0 — i.e. after every tween above
-    // has finished — this simply extends the timeline's total
-    // duration rather than editing any position above, so it can't
-    // disturb the already-verified assembly timing. stage/bg/haze are
-    // never part of this fade — they're not part of this timeline at
-    // all anymore (see buildSceneDrift) — so there's nothing to
-    // exclude here.
+    // Holds the track's full length. The crossfade below used to live
+    // here as scrubbed tweens; now that it runs on its own clock, this
+    // empty tween keeps the timeline exactly 1.0 long so every position
+    // above still means the same fraction of scroll — and so the
+    // resolved cover has scroll room to sit in before the hero ends.
+    tl.to({}, { duration: 0.155 }, 0.845);
+
+    // The frame outline is never faded out: the white border stays
+    // around the cover for the rest of the hero, including while it
+    // scrolls away.
+
+    // Beat 3b — the resolve, on its own clock rather than the scroll's.
     //
-    // overlay is deliberately NOT included in this fade. overlay and
+    // The live artwork dissolving into the real cover_nature.png used
+    // to be two scrubbed tweens, which meant the reader had to keep
+    // scrolling to make the cover resolve — the assembly would finish
+    // and then just sit there, unresolved, waiting for more input. It
+    // now runs as a plain timed tween the moment the assembly lands,
+    // so the cover completes itself and the scroll is free to be about
+    // moving on. Reverses if you scroll back up past the assembly, so
+    // the sequence is still fully re-playable in both directions.
+    //
+    // overlay is deliberately NOT part of this fade. overlay and
     // natureCover share the exact same box (.hero-layer--cover-box,
     // hero.css) as siblings inside .hero-engine — same position, same
     // size, same transform, same 880×1168 source canvas — so their
-    // text sits at identical pixels. With that guaranteed, there's no
-    // need to fade overlay out at all: it stays at opacity 1 (set
-    // during assembly, above) for the rest of the hero, and
-    // natureCover simply fades in on top of it. The masthead text is
-    // therefore continuously present and perfectly stationary through
-    // the whole crossfade — never doubled (nothing to double against;
-    // same pixels), never dipping to invisible (overlay's copy is
-    // always there) — only the artwork around/behind it (liveArt)
-    // resolves from live scene to flat print.
-    tl.to(liveArt, { opacity: 0, duration: 0.067 }, 0.844);
-    tl.to(natureCover, { opacity: 1, duration: 0.067 }, 0.844);
+    // text sits at identical pixels. overlay simply stays at opacity 1
+    // and natureCover fades in on top of it, which is what keeps the
+    // masthead continuously present and perfectly stationary: never
+    // doubled (same pixels), never dipping to invisible. Only the
+    // artwork around it (liveArt) resolves from live scene to print.
+    coverTl = gsapLib.timeline({ paused: true, defaults: { ease: 'power2.inOut' } });
+    coverTl.to(liveArt, { opacity: 0, duration: cssNum('--duration-base') }, 0);
+    coverTl.to(natureCover, { opacity: 1, duration: cssNum('--duration-base') }, 0);
 
-    // Beat 3c — tail exit: the resolve holds fully framed from 1.15 to
-    // 1.20 (a deliberate pause before anything else moves — the
-    // resolve itself, everything up to and including this hold, is
-    // pixel-identical to before this row existed), THEN the four bars
-    // and corner patches — only ever an assembly effect for reaching
-    // the resolve — fade away, so the small, cover-sized nature image
-    // that's left has no opaque margins around it as it scrolls off:
-    // just the same continuous .bg-fixed scene the rest of the page
-    // sits on, not a black-bordered box cutting to it.
-    tl.to(frameOutline, { opacity: 0, duration: 0.067 }, 0.933);
+    // Hysteresis, not a single threshold: playing at 0.845 but only
+    // reversing once back below 0.80 keeps a reader parked exactly on
+    // the boundary from flickering between the two states.
+    const RESOLVE_AT = 0.845;
+    const UNRESOLVE_AT = 0.80;
+    let resolved = false;
 
     st = ScrollTrigger.create({
       id: 'hero-main',
@@ -529,6 +536,15 @@ export async function initHero() {
       scrub: 1,
       anticipatePin: 1,
       animation: tl,
+      onUpdate: (self) => {
+        if (!resolved && self.progress >= RESOLVE_AT) {
+          resolved = true;
+          coverTl.play();
+        } else if (resolved && self.progress < UNRESOLVE_AT) {
+          resolved = false;
+          coverTl.reverse();
+        }
+      },
     });
   }
 
@@ -583,6 +599,7 @@ export async function initHero() {
     resizeTimer = setTimeout(() => {
       st?.kill();
       tl?.kill();
+      coverTl?.kill();
       sceneSt?.kill();
       sceneTl?.kill();
       buildScrollSequence();

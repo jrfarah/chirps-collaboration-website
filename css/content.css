@@ -12,72 +12,14 @@
 */
 
 /* ---------------------------------------------------------------
-   Nav — hidden over the hero, fades in once you've scrolled past it
-   (js/nav.js toggles .is-visible at exactly the hero's own end point,
-   .hero's 'bottom bottom' — the same scroll position hero.js's own
-   ScrollTrigers hand off at). Slim and quiet: --text-dim links, a
-   subtle scrim only once visible, never a solid bar.
------------------------------------------------------------------- */
-.site-nav {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 10;
-  padding-block: var(--space-3);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--duration-base) var(--ease-weighty),
-              background var(--duration-base) var(--ease-weighty),
-              backdrop-filter var(--duration-base) var(--ease-weighty);
-}
-
-.site-nav.is-visible {
-  opacity: 1;
-  pointer-events: auto;
-  background: var(--scrim);
-  /* Blurs whatever's scrolling behind the whole bar (dust, text
-     passing underneath), not just a darker strip — that's what
-     actually keeps the nav links reading clearly over busy content. */
-  backdrop-filter: blur(9px);
-  -webkit-backdrop-filter: blur(9px);
-}
-
-.site-nav__inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-}
-
-.site-nav__brand {
-  font-size: var(--step--1);
-  font-weight: var(--weight-medium);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-  color: var(--text-dim);
-}
-
-.site-nav__links {
-  display: flex;
-  gap: var(--space-4);
-}
-
-.site-nav__links a {
-  font-size: var(--step--1);
-  color: var(--text-dim);
-}
-
-/* ---------------------------------------------------------------
-   Section-jump rail — a second, independent nav: every section
-   always listed and always clickable, with only the currently-in-
-   view one brightened (js/sectionNav.js, IntersectionObserver-driven)
-   and the rest dimmed to --text-faint. Reveals on the same trigger as
-   .site-nav (past the hero) but is its own ScrollTrigger, so the two
-   stay decoupled. Desktop only — a persistent right-edge column has
-   no good answer on a narrow viewport that doesn't cost more width
-   than it's worth, so it's simply absent there; .site-nav's own links
-   already cover the same ground on mobile.
+   Section-jump rail — now the site's ONLY navigation, since the top
+   bar it used to duplicate is gone. Every section always listed and
+   always clickable, with the currently-in-view one brightened
+   (js/sectionNav.js, IntersectionObserver-driven) and the rest dimmed.
+   Present from the first frame at every width: it can't be hidden on
+   narrow screens any more, because there'd be no way to navigate at
+   all — so on mobile it shrinks and tucks tighter to the edge rather
+   than disappearing.
 ------------------------------------------------------------------ */
 .section-rail {
   position: fixed;
@@ -136,7 +78,20 @@
 
 @media (max-width: 900px) {
   .section-rail {
-    display: none;
+    right: var(--space-2);
+    gap: var(--space-2);
+  }
+
+  .section-rail__link {
+    font-size: 0.6875rem;
+    letter-spacing: 0.06em;
+  }
+
+  /* Reserve the rail's column so body text can't run underneath it.
+     Only needed at these widths: above 900px the measure is far
+     narrower than the viewport and the rail sits clear of it anyway. */
+  .content {
+    padding-right: calc(var(--content-pad) + 4.75rem);
   }
 }
 
@@ -151,7 +106,13 @@
    comfortable long-form reading rather than a shouted, oversized lede.
 ------------------------------------------------------------------ */
 .section-intro {
-  padding-block: var(--space-8);
+  /* Tighter at the bottom than the top: the story's last paragraph and
+     the "Why we care" lead-in were separated by two full --space-8
+     stacks (18rem of nothing), which read as the page having ended.
+     Worth being aggressive here because the drift (js/storyDrift.js)
+     leaves that last paragraph's box sitting there empty once it has
+     faded, which adds its own gap on top of whatever padding says. */
+  padding-block: var(--space-8) var(--space-5);
 }
 
 .section-intro__col {
@@ -176,7 +137,7 @@
    numerals + hairline rules, not boxes/icons/shadows.
 ------------------------------------------------------------------ */
 .section-goals {
-  padding-block: var(--space-8);
+  padding-block: var(--space-5) var(--space-8);
 }
 
 .goal-list {
@@ -239,12 +200,15 @@
   padding-block: var(--space-8);
 }
 
+/* This whole section runs brighter than the rest of the page's
+   supporting text — it's a figure to be read closely, and the muted
+   greys that suit prose were hard to make out over the dust. */
 .measure-intro {
   max-width: 60ch;
   font-size: var(--step-1);
   font-weight: var(--weight-light);
   line-height: var(--leading-normal);
-  color: var(--text-dim);
+  color: var(--text);
   margin-bottom: var(--space-6);
 }
 
@@ -267,7 +231,7 @@
   writing-mode: vertical-rl;
   transform: rotate(180deg);
   font-size: var(--step--1);
-  color: var(--text-faint);
+  color: var(--text-dim);
   white-space: nowrap;
 }
 
@@ -297,7 +261,7 @@
   margin-top: var(--space-2);
   text-align: center;
   font-size: var(--step--1);
-  color: var(--text-faint);
+  color: var(--text-dim);
 }
 
 /* ONE grid for all three columns, not three independent stacks. The
@@ -374,7 +338,7 @@
 .measure-slider__guide {
   font-size: var(--step--1);
   font-weight: var(--weight-light);
-  color: var(--text-dim);
+  color: var(--text);
 }
 
 /* Custom range input — thin track, small accent thumb, no native
@@ -461,7 +425,7 @@
   font-weight: var(--weight-medium);
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
-  color: var(--text-dim);
+  color: var(--text);
 }
 
 .measure-fit__value {
@@ -501,7 +465,7 @@
 .measure-fit__hint {
   font-size: var(--step--1);
   font-weight: var(--weight-light);
-  color: var(--text-faint);
+  color: var(--text);
 }
 
 .measure-snap {

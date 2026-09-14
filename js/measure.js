@@ -194,12 +194,15 @@ export async function initMeasure() {
 
   const weightyEase = cubicBezierEase(0.16, 1, 0.3, 1);
 
+  // Pitched brighter than the rest of the site's chrome on purpose:
+  // this is a figure meant to be read closely, and the muted greys
+  // that suit body text were genuinely hard to see against the dust.
   const colors = {
-    grid: cssColor('--line'),
-    axis: cssColor('--text-faint'),
-    tick: cssColor('--text-faint'),
+    grid: cssColor('--line-raised'),
+    axis: cssColor('--text-dim'),
+    tick: cssColor('--text-dim'),
     model: cssColor('--accent'),
-    data: cssColor('--text-dim'),
+    data: cssColor('--text'),
   };
 
   const [pMin, pMax] = chirp.grid.P_spin_range;
@@ -312,7 +315,7 @@ export async function initMeasure() {
       const resid = chirp.observed.residual[i];
       const err = errors[i];
       ctx.strokeStyle = colors.data;
-      ctx.globalAlpha = 0.45;
+      ctx.globalAlpha = 0.7;
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(x, yScale(resid + err));

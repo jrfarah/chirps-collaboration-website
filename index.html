@@ -25,25 +25,11 @@
   <link rel="stylesheet" href="css/content.css" />
 </head>
 <body>
-  <nav class="site-nav" data-site-nav>
-    <div class="site-nav__inner content">
-      <a class="site-nav__brand" href="#top">CHIRP</a>
-      <div class="site-nav__links">
-        <a href="#story">Story</a>
-        <a href="#goals">Why</a>
-        <a href="#measure">Measure</a>
-        <a href="#roadmap">Roadmap</a>
-        <a href="#team">Team</a>
-        <a href="#coverage">Coverage</a>
-      </div>
-    </div>
-  </nav>
-
-  <!-- Section-jump rail — fades in alongside .site-nav (same reveal
-       point, js/sectionNav.js) and tracks the currently-in-view
-       section via IntersectionObserver, brightening that one link and
-       dimming the rest. Every section is always clickable, including
-       back up to Home. -->
+  <!-- The site's only navigation, since the top bar it duplicated is
+       gone. Tracks the currently-in-view section via
+       IntersectionObserver (js/sectionNav.js), brightening that one
+       link and dimming the rest; every section is always clickable,
+       including back up to Home. -->
   <nav class="section-rail" data-section-rail aria-label="Jump to section">
     <a class="section-rail__link" href="#top" data-section-rail-link="top">Home</a>
     <a class="section-rail__link" href="#story" data-section-rail-link="story">Story</a>
